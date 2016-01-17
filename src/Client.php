@@ -25,6 +25,34 @@ class Client
         $this->authoriseAccount();
     }
 
+    /**
+     * Create a bucket with the given name and type.
+     * TODO: add proper error checking.
+     *
+     * @param $name
+     * @param $type
+     * @return Bucket
+     */
+    public function createBucket($name, $type)
+    {
+        $response = $this->client->post($this->apiUrl.'/b2_create_bucket', [
+            'Authorization' => $this->authToken
+        ], [
+            'accountId' => $this->accountId,
+            'bucketName' => $name,
+            'bucketType' => $type
+        ]);
+
+        $response = json_decode($response->getBody(), true);
+
+        return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
+    }
+
+    /**
+     * Returns a list of bucket objects representing the buckets on the account.
+     *
+     * @return array
+     */
     public function listBuckets()
     {
         $buckets = [];
@@ -37,6 +65,30 @@ class Client
         return $buckets;
     }
 
+    /**
+     * Deletes the bucket identified by ID.
+     * TODO: add proper error handling.
+     *
+     * @param $id
+     * @return bool
+     */
+    public function deleteBucket($id)
+    {
+        $response = $this->client->post($this->apiUrl.'/b2_delete_bucket', [
+            'Authorization' => $this->authToken
+        ], [
+            'accountId' => $this->accountId,
+            'bucketId' => $id
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Authorise the B2 account in order to get an auth token and API/download URLs.
+     *
+     * @throws \Exception
+     */
     protected function authoriseAccount()
     {
         $response = $this->client->get('https://api.backblaze.com/b2api/v1/b2_authorize_account', [
