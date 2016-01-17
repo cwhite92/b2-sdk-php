@@ -2,6 +2,8 @@
 
 namespace ChrisWhite\B2;
 
+use GuzzleHttp\Exception\ClientException;
+
 class Client
 {
     protected $accountId;
@@ -20,6 +22,8 @@ class Client
 
         if (isset($options['client']) && $options['client'] instanceof \GuzzleHttp\Client) {
             $this->client = $options['client'];
+        } else {
+            $this->client = new \GuzzleHttp\Client(['exceptions' => false]);
         }
 
         $this->authoriseAccount();
@@ -27,25 +31,32 @@ class Client
 
     /**
      * Create a bucket with the given name and type.
-     * TODO: add proper error checking.
      *
      * @param $name
      * @param $type
      * @return Bucket
+     * @throws \Exception
      */
     public function createBucket($name, $type)
     {
-        $response = $this->client->post($this->apiUrl.'/b2_create_bucket', [
-            'Authorization' => $this->authToken
-        ], [
-            'accountId' => $this->accountId,
-            'bucketName' => $name,
-            'bucketType' => $type
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_create_bucket', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json' => [
+                'accountId' => $this->accountId,
+                'bucketName' => $name,
+                'bucketType' => $type
+            ]
         ]);
 
-        $response = json_decode($response->getBody(), true);
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
 
-        return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
+        $responseJson = json_decode($response->getBody(), true);
+
+        return new Bucket($responseJson['bucketId'], $responseJson['bucketName'], $responseJson['bucketType']);
     }
 
     /**
@@ -56,9 +67,23 @@ class Client
     public function listBuckets()
     {
         $buckets = [];
-        $response = json_decode($this->client->get($this->apiUrl.'/b2_list_buckets')->getBody(), true);
 
-        foreach ($response['buckets'] as $bucket) {
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_list_buckets', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json' => [
+                'accountId' => $this->accountId
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        $responseJson = json_decode($response->getBody(), true);
+
+        foreach ($responseJson['buckets'] as $bucket) {
             $buckets[] = new Bucket($bucket['bucketId'], $bucket['bucketName'], $bucket['bucketType']);
         }
 
@@ -66,20 +91,26 @@ class Client
     }
 
     /**
-     * Deletes the bucket identified by ID.
-     * TODO: add proper error handling.
+     * Deletes the bucket identified by its ID.
      *
      * @param $id
      * @return bool
      */
     public function deleteBucket($id)
     {
-        $response = $this->client->post($this->apiUrl.'/b2_delete_bucket', [
-            'Authorization' => $this->authToken
-        ], [
-            'accountId' => $this->accountId,
-            'bucketId' => $id
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_delete_bucket', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'json' => [
+                'accountId' => $this->accountId,
+                'bucketId' => $id
+            ]
         ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
 
         return true;
     }
