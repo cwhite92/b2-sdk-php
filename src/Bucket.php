@@ -1,0 +1,20 @@
+<?php
+
+namespace ChrisWhite\B2;
+
+class Bucket
+{
+    const TYPE_PUBLIC = 'allPublic';
+    const TYPE_PRIVATE = 'allPrivate';
+
+    protected $id;
+    protected $name;
+    protected $type;
+
+    public function __construct($id, $name, $type)
+    {
+        $this->id = $id;
+        $this->name = $name;
+        $this->type = $type;
+    }
+}
