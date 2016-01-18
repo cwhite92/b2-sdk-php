@@ -2,8 +2,6 @@
 
 namespace ChrisWhite\B2;
 
-use GuzzleHttp\Exception\ClientException;
-
 class Client
 {
     protected $accountId;
@@ -15,6 +13,13 @@ class Client
 
     protected $client;
 
+    /**
+     * Client constructor. Accepts the account ID, application key and an optional array of options.
+     *
+     * @param $accountId
+     * @param $applicationKey
+     * @param array $options
+     */
     public function __construct($accountId, $applicationKey, array $options = [])
     {
         $this->accountId = $accountId;
