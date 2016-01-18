@@ -2,6 +2,8 @@
 
 namespace ChrisWhite\B2;
 
+use ChrisWhite\B2\Exceptions\ValidationException;
+
 class Client
 {
     protected $accountId;
@@ -40,10 +42,16 @@ class Client
      * @param $name
      * @param $type
      * @return Bucket
-     * @throws \Exception
+     * @throws ValidationException
      */
     public function createBucket($name, $type)
     {
+        if (!in_array($type, [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+            throw new ValidationException(
+                sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
+            );
+        }
+
         $response = $this->client->request('POST', $this->apiUrl.'/b2_create_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken,
@@ -51,6 +59,42 @@ class Client
             'json' => [
                 'accountId' => $this->accountId,
                 'bucketName' => $name,
+                'bucketType' => $type
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        $responseJson = json_decode($response->getBody(), true);
+
+        return new Bucket($responseJson['bucketId'], $responseJson['bucketName'], $responseJson['bucketType']);
+    }
+
+    /**
+     * Updates the type attribute of a bucket by the given ID.
+     *
+     * @param $id
+     * @param $type
+     * @return Bucket
+     * @throws ValidationException
+     */
+    public function updateBucket($id, $type)
+    {
+        if (!in_array($type, [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+            throw new ValidationException(
+                sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
+            );
+        }
+
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_update_bucket', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json' => [
+                'accountId' => $this->accountId,
+                'bucketId' => $id,
                 'bucketType' => $type
             ]
         ]);

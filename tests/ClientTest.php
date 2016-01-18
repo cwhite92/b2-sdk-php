@@ -6,6 +6,7 @@ use ChrisWhite\B2\Bucket;
 use ChrisWhite\B2\Client;
 use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
 use ChrisWhite\B2\Exceptions\BadJsonException;
+use ChrisWhite\B2\Exceptions\ValidationException;
 
 class ClientTest extends \PHPUnit_Framework_TestCase
 {
@@ -54,6 +55,50 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
         $client->createBucket('I already exist', Bucket::TYPE_PRIVATE);
+    }
+
+    public function testInvalidBucketTypeThrowsException()
+    {
+        $this->setExpectedException(ValidationException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+        $client->createBucket('bucket-name', 'invalid-type');
+    }
+
+    public function testUpdateBucketToPrivate()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'update_bucket_to_private.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $bucket = $client->updateBucket('test-bucket', Bucket::TYPE_PRIVATE);
+        $this->assertInstanceOf(Bucket::class, $bucket);
+        $this->assertEquals('bucketId', $bucket->getId());
+        $this->assertEquals('test-bucket', $bucket->getName());
+        $this->assertEquals(Bucket::TYPE_PRIVATE, $bucket->getType());
+    }
+
+    public function testUpdateBucketToPublic()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'update_bucket_to_public.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $bucket = $client->updateBucket('test-bucket', Bucket::TYPE_PRIVATE);
+        $this->assertInstanceOf(Bucket::class, $bucket);
+        $this->assertEquals('bucketId', $bucket->getId());
+        $this->assertEquals('test-bucket', $bucket->getName());
+        $this->assertEquals(Bucket::TYPE_PUBLIC, $bucket->getType());
     }
 
     public function testList3Buckets()
