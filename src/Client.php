@@ -165,6 +165,83 @@ class Client
     }
 
     /**
+     * Uploads a file to a bucket and returns a File object.
+     *
+     * @param $bucketId
+     * @param $path
+     * @param $body
+     * @return bool
+     */
+    public function upload($bucketId, $path, $body)
+    {
+        // Clean the path if it starts with /.
+        if (substr($path, 0, 1) === '/') {
+            $path = ltrim($path, '/');
+        }
+
+        // Retrieve the URL that we should be uploading to.
+        $response = $this->client->post($this->apiUrl.'/b2_get_upload_url', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'json' => [
+                'bucketId' => $bucketId
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        $responseJson = json_decode($response->getBody(), true);
+        $uploadEndpoint = $responseJson['uploadUrl'];
+        $uploadAuthToken = $responseJson['authorizationToken'];
+
+        if (is_resource($body)) {
+            // We need to calculate the hash incrementally from the stream.
+            $context = hash_init('sha1');
+            hash_update_stream($context, $body);
+            $hash = hash_final($context);
+
+            // Similarly, we have to use fstat to get the size of the stream.
+            $size = fstat($body)['size'];
+        } else {
+            // We've been given a simple string body, it's super simple to calculate the hash and size.
+            $hash = sha1($body);
+            $size = mb_strlen($body);
+        }
+
+        $response = $this->client->post($uploadEndpoint, [
+            'headers' => [
+                'Authorization' => $uploadAuthToken,
+                // TODO: work out the content type, or allow it to be passed in
+                'Content-Type' => 'application/octet-stream',
+                'Content-Length' => $size,
+                'X-Bz-File-Name' => $path,
+                'X-Bz-Content-Sha1' => $hash,
+                // TODO: work out the last modified time
+                'X-Bz-Info-src_last_modified_millis' => round(microtime(true) * 1000)
+            ],
+            'body' => $body
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        $responseJson = json_decode($response->getBody(), true);
+
+        return new File(
+            $responseJson['fileId'],
+            $responseJson['fileName'],
+            $responseJson['contentSha1'],
+            $responseJson['contentLength'],
+            $responseJson['contentType'],
+            $responseJson['fileInfo']
+        );
+    }
+
+    /**
      * Authorise the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception

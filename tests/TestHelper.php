@@ -4,10 +4,14 @@ namespace ChrisWhite\B2\Tests;
 
 trait TestHelper
 {
-    protected function buildGuzzleFromResponses(array $responses)
+    protected function buildGuzzleFromResponses(array $responses, $history = null)
     {
         $mock = new \GuzzleHttp\Handler\MockHandler($responses);
         $handler = new \GuzzleHttp\HandlerStack($mock);
+
+        if ($history) {
+            $handler->push($history);
+        }
 
         return new \GuzzleHttp\Client(['handler' => $handler]);
     }

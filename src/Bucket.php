@@ -11,6 +11,13 @@ class Bucket
     protected $name;
     protected $type;
 
+    /**
+     * Bucket constructor.
+     *
+     * @param $id
+     * @param $name
+     * @param $type
+     */
     public function __construct($id, $name, $type)
     {
         $this->id = $id;
