@@ -159,7 +159,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client->deleteBucket('i-dont-exist');
     }
 
-    public function testUploading()
+    public function testUploadingResource()
     {
         $container = [];
         $history = Middleware::history($container);
@@ -176,6 +176,32 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         rewind($resource);
 
         $file = $client->upload('bucketId', 'test.bin', $resource);
+        $this->assertInstanceOf(File::class, $file);
+
+        // We'll also check the Guzzle history to make sure the upload request got created correctly.
+        $uploadRequest = $container[2]['request'];
+        $this->assertEquals('uploadUrl', $uploadRequest->getRequestTarget());
+        $this->assertEquals('authToken', $uploadRequest->getHeader('Authorization')[0]);
+        $this->assertEquals(strlen($content), $uploadRequest->getHeader('Content-Length')[0]);
+        $this->assertEquals('test.bin', $uploadRequest->getHeader('X-Bz-File-Name')[0]);
+        $this->assertEquals(sha1($content), $uploadRequest->getHeader('X-Bz-Content-Sha1')[0]);
+        $this->assertEquals(round(microtime(true) * 1000), $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0], '', 100);
+        $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
+    }
+
+    public function testUploadingString()
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_upload_url.json'),
+            $this->buildResponseFromStub(200, [], 'upload.json')
+        ], $history);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+        $content = 'The quick brown box jumps over the lazy dog';
+        $file = $client->upload('bucketId', 'test.bin', $content);
         $this->assertInstanceOf(File::class, $file);
 
         // We'll also check the Guzzle history to make sure the upload request got created correctly.
