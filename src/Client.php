@@ -3,6 +3,7 @@
 namespace ChrisWhite\B2;
 
 use ChrisWhite\B2\Exceptions\ValidationException;
+use ChrisWhite\B2\Http\Client as HttpClient;
 
 class Client
 {
@@ -30,7 +31,7 @@ class Client
         if (isset($options['client']) && $options['client'] instanceof \GuzzleHttp\Client) {
             $this->client = $options['client'];
         } else {
-            $this->client = new \GuzzleHttp\Client(['exceptions' => false]);
+            $this->client = new HttpClient(['exceptions' => false]);
         }
 
         $this->authoriseAccount();
