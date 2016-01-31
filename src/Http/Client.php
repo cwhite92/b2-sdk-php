@@ -2,7 +2,7 @@
 
 namespace ChrisWhite\B2\Http;
 
-use GuzzleHttp as GuzzleClient;
+use GuzzleHttp\Client as GuzzleClient;
 
 /**
  * Client wrapper around Guzzle.
