@@ -1,4 +1,4 @@
-## b2-ask-php
+## b2-sdk-php
 
 `b2-sdk-php` is a small(ish) client library for working with Backblaze's B2 storage service. It aims to make using the
 service as easy as possible while taking influence from other, similar clients.
