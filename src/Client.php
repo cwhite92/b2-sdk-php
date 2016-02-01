@@ -243,6 +243,58 @@ class Client
     }
 
     /**
+     * Download a file identified by its ID.
+     *
+     * @param $fileId
+     * @param null $savePathOrResource
+     * @return bool|string
+     */
+    public function downloadById($fileId, $savePathOrResource = null)
+    {
+        $response = $this->client->get($this->downloadUrl.'/b2api/v1/b2_download_file_by_id', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'query' => [
+                'fileId' => $fileId
+            ],
+            'sink' => $savePathOrResource
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        return is_null($savePathOrResource) ? $response->getBody()->getContents() : true;
+    }
+
+    /**
+     * Download a file identified by its path.
+     *
+     * @param $bucketName
+     * @param $filePath
+     * @param null $savePathOrResource
+     * @return bool|string
+     */
+    public function downloadByPath($bucketName, $filePath, $savePathOrResource = null)
+    {
+        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $bucketName, $filePath);
+
+        $response = $this->client->get($url, [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'sink' => $savePathOrResource
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        return is_null($savePathOrResource) ? $response->getBody()->getContents() : true;
+    }
+
+    /**
      * Authorise the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception

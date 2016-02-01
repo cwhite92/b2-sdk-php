@@ -214,4 +214,16 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(round(microtime(true) * 1000), $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0], '', 100);
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
     }
+
+    public function testDownloadById()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'delete_bucket_non_existent.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->downloadById('bucketId', 'fileId', '/path/to/save/to');
+    }
 }
