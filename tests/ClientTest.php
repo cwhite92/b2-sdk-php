@@ -4,6 +4,8 @@ namespace ChrisWhite\B2\Tests;
 
 use ChrisWhite\B2\Client;
 use ChrisWhite\B2\Bucket;
+use ChrisWhite\B2\Exceptions\BadValueException;
+use ChrisWhite\B2\Exceptions\NotFoundException;
 use ChrisWhite\B2\File;
 use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
 use ChrisWhite\B2\Exceptions\BadJsonException;
@@ -246,6 +248,20 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         unlink(__DIR__.'/test.txt');
     }
 
+    public function testDownloadingByIncorrectIdThrowsException()
+    {
+        $this->setExpectedException(BadValueException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'download_by_incorrect_id.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->downloadById('incorrectFileId');
+    }
+
     public function testDownloadByPathWithoutSavePath()
     {
         $guzzle = $this->buildGuzzleFromResponses([
@@ -260,7 +276,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($fileContent, 'The quick brown fox jumps over the lazy dog');
     }
 
-    public function testDownloadByIdWithSavePath()
+    public function testDownloadByPathWithSavePath()
     {
         $guzzle = $this->buildGuzzleFromResponses([
             $this->buildResponseFromStub(200, [], 'authorize_account.json'),
@@ -275,5 +291,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('The quick brown fox jumps over the lazy dog', file_get_contents(__DIR__.'/test.txt'));
 
         unlink(__DIR__.'/test.txt');
+    }
+
+    public function testDownloadingByIncorrectPathThrowsException()
+    {
+        $this->setExpectedException(NotFoundException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'download_by_incorrect_path.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->downloadByPath('bucket-name', '/incorrect/path/to/file');
     }
 }

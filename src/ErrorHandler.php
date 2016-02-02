@@ -3,12 +3,18 @@
 namespace ChrisWhite\B2;
 
 use ChrisWhite\B2\Exceptions\B2Exception;
+use ChrisWhite\B2\Exceptions\BadJsonException;
+use ChrisWhite\B2\Exceptions\BadValueException;
+use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
+use ChrisWhite\B2\Exceptions\NotFoundException;
 
 class ErrorHandler
 {
     protected static $mappings = [
-        'bad_json' => Exceptions\BadJsonException::class,
-        'duplicate_bucket_name' => Exceptions\BucketAlreadyExistsException::class
+        'bad_json' => BadJsonException::class,
+        'bad_value' => BadValueException::class,
+        'duplicate_bucket_name' => BucketAlreadyExistsException::class,
+        'not_found' => NotFoundException::class
     ];
 
     public static function handleErrorResponse($response)
