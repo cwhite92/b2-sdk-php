@@ -215,15 +215,65 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
     }
 
-    public function testDownloadById()
+    public function testDownloadByIdWithoutSavePath()
     {
         $guzzle = $this->buildGuzzleFromResponses([
             $this->buildResponseFromStub(200, [], 'authorize_account.json'),
-            $this->buildResponseFromStub(400, [], 'delete_bucket_non_existent.json')
+            $this->buildResponseFromStub(200, [], 'download_content')
         ]);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById('bucketId', 'fileId', '/path/to/save/to');
+        $fileContent = $client->downloadById('fileId');
+
+        $this->assertEquals($fileContent, 'The quick brown fox jumps over the lazy dog');
+    }
+
+    public function testDownloadByIdWithSavePath()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'download_content')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->downloadById('fileId', __DIR__.'/test.txt');
+
+        $this->assertFileExists(__DIR__.'/test.txt');
+        $this->assertEquals('The quick brown fox jumps over the lazy dog', file_get_contents(__DIR__.'/test.txt'));
+
+        unlink(__DIR__.'/test.txt');
+    }
+
+    public function testDownloadByPathWithoutSavePath()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'download_content')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $fileContent = $client->downloadByPath('test-bucket', 'fileId');
+
+        $this->assertEquals($fileContent, 'The quick brown fox jumps over the lazy dog');
+    }
+
+    public function testDownloadByIdWithSavePath()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'download_content')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->downloadById('fileId', __DIR__.'/test.txt');
+
+        $this->assertFileExists(__DIR__.'/test.txt');
+        $this->assertEquals('The quick brown fox jumps over the lazy dog', file_get_contents(__DIR__.'/test.txt'));
+
+        unlink(__DIR__.'/test.txt');
     }
 }
