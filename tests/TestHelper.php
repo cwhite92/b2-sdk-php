@@ -2,6 +2,8 @@
 
 namespace ChrisWhite\B2\Tests;
 
+use ChrisWhite\B2\Http\Client as HttpClient;
+
 trait TestHelper
 {
     protected function buildGuzzleFromResponses(array $responses, $history = null)
@@ -13,7 +15,7 @@ trait TestHelper
             $handler->push($history);
         }
 
-        return new \GuzzleHttp\Client(['handler' => $handler]);
+        return new HttpClient(['handler' => $handler]);
     }
 
     protected function buildResponseFromStub($statusCode, array $headers = [], $responseFile)

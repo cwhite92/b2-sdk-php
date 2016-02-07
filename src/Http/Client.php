@@ -2,6 +2,7 @@
 
 namespace ChrisWhite\B2\Http;
 
+use ChrisWhite\B2\ErrorHandler;
 use GuzzleHttp\Client as GuzzleClient;
 
 /**
@@ -12,15 +13,26 @@ use GuzzleHttp\Client as GuzzleClient;
 class Client extends GuzzleClient
 {
     /**
-     * Provide a responsible and helpful user agent when making HTTP requests.
+     * Sends a response to the B2 API, automatically handling decoding JSON and errors.
      *
-     * @return string
+     * @param string $method
+     * @param null $uri
+     * @param array $options
+     * @param bool $asJson
+     * @return mixed|string
      */
-    public function getDefaultUserAgent()
+    public function request($method, $uri, array $options = [], $asJson = true)
     {
-        return 'b2-sdk-php'.
-            ' Guzzle/'.curl_version()['version'].
-            ' cURL'.
-            ' PHP/'.PHP_VERSION;
+        $response = parent::request($method, $uri, $options);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        if ($asJson) {
+            return json_decode($response->getBody(), true);
+        }
+
+        return $response->getBody()->getContents();
     }
 }

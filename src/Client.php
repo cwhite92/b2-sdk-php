@@ -28,7 +28,7 @@ class Client
         $this->accountId = $accountId;
         $this->applicationKey = $applicationKey;
 
-        if (isset($options['client']) && $options['client'] instanceof \GuzzleHttp\Client) {
+        if (isset($options['client'])) {
             $this->client = $options['client'];
         } else {
             $this->client = new HttpClient(['exceptions' => false]);
@@ -64,13 +64,7 @@ class Client
             ]
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody(), true);
-
-        return new Bucket($responseJson['bucketId'], $responseJson['bucketName'], $responseJson['bucketType']);
+        return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
     }
 
     /**
@@ -100,13 +94,7 @@ class Client
             ]
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody(), true);
-
-        return new Bucket($responseJson['bucketId'], $responseJson['bucketName'], $responseJson['bucketType']);
+        return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
     }
 
     /**
@@ -127,13 +115,7 @@ class Client
             ]
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody(), true);
-
-        foreach ($responseJson['buckets'] as $bucket) {
+        foreach ($response['buckets'] as $bucket) {
             $buckets[] = new Bucket($bucket['bucketId'], $bucket['bucketName'], $bucket['bucketType']);
         }
 
@@ -149,7 +131,7 @@ class Client
      */
     public function deleteBucket($id)
     {
-        $response = $this->client->request('POST', $this->apiUrl.'/b2_delete_bucket', [
+        $this->client->request('POST', $this->apiUrl.'/b2_delete_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
@@ -158,10 +140,6 @@ class Client
                 'bucketId' => $id
             ]
         ]);
-
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
 
         return true;
     }
@@ -182,7 +160,7 @@ class Client
         }
 
         // Retrieve the URL that we should be uploading to.
-        $response = $this->client->post($this->apiUrl.'/b2_get_upload_url', [
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_get_upload_url', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
@@ -191,13 +169,8 @@ class Client
             ]
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody(), true);
-        $uploadEndpoint = $responseJson['uploadUrl'];
-        $uploadAuthToken = $responseJson['authorizationToken'];
+        $uploadEndpoint = $response['uploadUrl'];
+        $uploadAuthToken = $response['authorizationToken'];
 
         if (is_resource($body)) {
             // We need to calculate the hash incrementally from the stream.
@@ -213,7 +186,7 @@ class Client
             $size = mb_strlen($body);
         }
 
-        $response = $this->client->post($uploadEndpoint, [
+        $response = $this->client->request('POST', $uploadEndpoint, [
             'headers' => [
                 'Authorization' => $uploadAuthToken,
                 // TODO: work out the content type, or allow it to be passed in
@@ -227,19 +200,13 @@ class Client
             'body' => $body
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody(), true);
-
         return new File(
-            $responseJson['fileId'],
-            $responseJson['fileName'],
-            $responseJson['contentSha1'],
-            $responseJson['contentLength'],
-            $responseJson['contentType'],
-            $responseJson['fileInfo']
+            $response['fileId'],
+            $response['fileName'],
+            $response['contentSha1'],
+            $response['contentLength'],
+            $response['contentType'],
+            $response['fileInfo']
         );
     }
 
@@ -252,7 +219,7 @@ class Client
      */
     public function downloadById($fileId, $savePathOrResource = null)
     {
-        $response = $this->client->get($this->downloadUrl.'/b2api/v1/b2_download_file_by_id', [
+        $response = $this->client->request('GET', $this->downloadUrl.'/b2api/v1/b2_download_file_by_id', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
@@ -260,13 +227,9 @@ class Client
                 'fileId' => $fileId
             ],
             'sink' => $savePathOrResource
-        ]);
+        ], false);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        return is_null($savePathOrResource) ? $response->getBody()->getContents() : true;
+        return is_null($savePathOrResource) ? $response : true;
     }
 
     /**
@@ -281,18 +244,14 @@ class Client
     {
         $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $bucketName, $filePath);
 
-        $response = $this->client->get($url, [
+        $response = $this->client->request('GET', $url, [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
             'sink' => $savePathOrResource
-        ]);
+        ], false);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        return is_null($savePathOrResource) ? $response->getBody()->getContents() : true;
+        return is_null($savePathOrResource) ? $response : true;
     }
 
     /**
@@ -308,7 +267,7 @@ class Client
 
         // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
         while (true) {
-            $response = $this->client->post($this->apiUrl.'/b2_list_file_names', [
+            $response = $this->client->request('POST', $this->apiUrl.'/b2_list_file_names', [
                 'headers' => [
                     'Authorization' => $this->authToken
                 ],
@@ -319,22 +278,16 @@ class Client
                 ]
             ]);
 
-            if ($response->getStatusCode() !== 200) {
-                ErrorHandler::handleErrorResponse($response);
-            }
-
-            $responseJson = json_decode($response->getBody()->getContents(), true);
-
-            foreach ($responseJson['files'] as $file) {
+            foreach ($response['files'] as $file) {
                 $files[] = new File($file['fileId'], $file['fileName'], null, $file['size']);
             }
 
-            if ($responseJson['nextFileName'] === null) {
+            if ($response['nextFileName'] === null) {
                 // We've got all the files - break out of loop.
                 break;
             }
 
-            $nextFileName = $responseJson['nextFileName'];
+            $nextFileName = $response['nextFileName'];
         }
 
         return $files;
@@ -348,7 +301,7 @@ class Client
      */
     public function getFile($fileId)
     {
-        $response = $this->client->post($this->apiUrl.'/b2_get_file_info', [
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_get_file_info', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
@@ -357,19 +310,13 @@ class Client
             ]
         ]);
 
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
-
-        $responseJson = json_decode($response->getBody()->getContents(), true);
-
         return new File(
-            $responseJson['fileId'],
-            $responseJson['fileName'],
-            $responseJson['contentSha1'],
-            $responseJson['contentLength'],
-            $responseJson['contentType'],
-            $responseJson['fileInfo']
+            $response['fileId'],
+            $response['fileName'],
+            $response['contentSha1'],
+            $response['contentLength'],
+            $response['contentType'],
+            $response['fileInfo']
         );
     }
 
@@ -388,7 +335,7 @@ class Client
             $fileName = $file->getPath();
         }
 
-        $response = $this->client->post($this->apiUrl.'/b2_delete_file_version', [
+        $this->client->request('POST', $this->apiUrl.'/b2_delete_file_version', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
@@ -397,10 +344,6 @@ class Client
                 'fileId' => $fileId
             ]
         ]);
-
-        if ($response->getStatusCode() !== 200) {
-            ErrorHandler::handleErrorResponse($response);
-        }
 
         return true;
     }
@@ -412,15 +355,9 @@ class Client
      */
     protected function authoriseAccount()
     {
-        $response = $this->client->get('https://api.backblaze.com/b2api/v1/b2_authorize_account', [
+        $response = $this->client->request('GET', 'https://api.backblaze.com/b2api/v1/b2_authorize_account', [
             'auth' => [$this->accountId, $this->applicationKey]
         ]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new \Exception('Received non-200 status code when authorizing account: '.$response->getStatusCode());
-        }
-
-        $response = json_decode($response->getBody(), true);
 
         $this->authToken = $response['authorizationToken'];
         $this->apiUrl = $response['apiUrl'].'/b2api/v1';
