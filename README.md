@@ -1,7 +1,9 @@
-## b2-sdk-php
+## Backblaze B2 SDK for PHP
 
 `b2-sdk-php` is a small(ish) client library for working with Backblaze's B2 storage service. It aims to make using the
 service as easy as possible while taking influence from other, similar clients.
+
+**Note:** This package is not production ready.
 
 ## Example
 
