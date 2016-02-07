@@ -142,6 +142,7 @@ class Client
 
     /**
      * Deletes the bucket identified by its ID.
+     * TODO: what if you delete a bucket that already exists?
      *
      * @param $id
      * @return bool
@@ -292,6 +293,51 @@ class Client
         }
 
         return is_null($savePathOrResource) ? $response->getBody()->getContents() : true;
+    }
+
+    /**
+     * Retrieve a collection of File objects representing the files stored inside a bucket.
+     *
+     * @param $bucketId
+     * @return array
+     */
+    public function listFiles($bucketId)
+    {
+        $nextFileName = null;
+        $files = [];
+
+        // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
+        while (true) {
+            $response = $this->client->post($this->apiUrl.'/b2_list_file_names', [
+                'headers' => [
+                    'Authorization' => $this->authToken
+                ],
+                'json' => [
+                    'bucketId' => $bucketId,
+                    'startFileName' => $nextFileName,
+                    'maxFileCount' => 10
+                ]
+            ]);
+
+            if ($response->getStatusCode() !== 200) {
+                ErrorHandler::handleErrorResponse($response);
+            }
+
+            $responseJson = json_decode($response->getBody()->getContents(), true);
+
+            foreach ($responseJson['files'] as $file) {
+                $files[] = new File($file['fileId'], $file['fileName'], null, $file['size']);
+            }
+
+            if ($responseJson['nextFileName'] === null) {
+                // We've got all the files - break out of loop.
+                break;
+            }
+
+            $nextFileName = $responseJson['nextFileName'];
+        }
+
+        return $files;
     }
 
     /**

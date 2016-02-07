@@ -21,7 +21,7 @@ class File
      * @param $type
      * @param $info
      */
-    public function __construct($id, $path, $hash, $size, $type, $info)
+    public function __construct($id, $path, $hash = null, $size = null, $type = null, $info = null)
     {
         $this->id = $id;
         $this->path = $path;

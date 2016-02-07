@@ -306,4 +306,36 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client->downloadByPath('bucket-name', '/incorrect/path/to/file');
     }
+
+    public function testListFilesHandlesMultiplePages()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'list_files_page1.json'),
+            $this->buildResponseFromStub(200, [], 'list_files_page2.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $files = $client->listFiles('bucketId');
+
+        $this->assertInternalType('array', $files);
+        $this->assertInstanceOf(File::class, $files[0]);
+        $this->assertCount(1500, $files);
+    }
+
+    public function testListFilesReturnsEmptyArrayWithNoFiles()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'list_files_empty.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $files = $client->listFiles('bucketId');
+
+        $this->assertInternalType('array', $files);
+        $this->assertCount(0, $files);
+    }
 }
