@@ -338,4 +338,32 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInternalType('array', $files);
         $this->assertCount(0, $files);
     }
+
+    public function testGetFile()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_file.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $file = $client->getFile('fileId');
+
+        $this->assertInstanceOf(File::class, $file);
+    }
+
+    public function testGettingNonExistentFileThrowsException()
+    {
+        $this->setExpectedException(BadJsonException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'get_file_non_existent.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $file = $client->getFile('nonExistentFileId');
+    }
 }

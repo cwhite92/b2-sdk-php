@@ -341,6 +341,39 @@ class Client
     }
 
     /**
+     * Returns a single File object representing a file stored on B2.
+     *
+     * @param $fileId
+     * @return File
+     */
+    public function getFile($fileId)
+    {
+        $response = $this->client->post($this->apiUrl.'/b2_get_file_info', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'json' => [
+                'fileId' => $fileId
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        $responseJson = json_decode($response->getBody()->getContents(), true);
+
+        return new File(
+            $responseJson['fileId'],
+            $responseJson['fileName'],
+            $responseJson['contentSha1'],
+            $responseJson['contentLength'],
+            $responseJson['contentType'],
+            $responseJson['fileInfo']
+        );
+    }
+
+    /**
      * Authorise the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception
