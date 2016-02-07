@@ -366,4 +366,44 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $file = $client->getFile('nonExistentFileId');
     }
+
+    public function testDeleteFile()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_file.json'),
+            $this->buildResponseFromStub(200, [], 'delete_file.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $this->assertTrue($client->deleteFile('fileId'));
+    }
+
+    public function testDeleteFileRetrievesFileNameWhenNotProvided()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_file.json'),
+            $this->buildResponseFromStub(200, [], 'delete_file.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $this->assertTrue($client->deleteFile('fileId'));
+    }
+
+    public function testDeletingNonExistentFileThrowsException()
+    {
+        $this->setExpectedException(BadJsonException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'delete_file_non_existent.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $this->assertTrue($client->deleteFile('fileId', 'fileName'));
+    }
 }

@@ -374,6 +374,38 @@ class Client
     }
 
     /**
+     * Deletes the file identified by ID from Backblaze B2.
+     *
+     * @param $fileId
+     * @param null $fileName
+     * @return bool
+     */
+    public function deleteFile($fileId, $fileName = null)
+    {
+        if ($fileName === null) {
+            $file = $this->getFile($fileId);
+
+            $fileName = $file->getPath();
+        }
+
+        $response = $this->client->post($this->apiUrl.'/b2_delete_file_version', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'json' => [
+                'fileName' => $fileName,
+                'fileId' => $fileId
+            ]
+        ]);
+
+        if ($response->getStatusCode() !== 200) {
+            ErrorHandler::handleErrorResponse($response);
+        }
+
+        return true;
+    }
+
+    /**
      * Authorise the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception

@@ -5,6 +5,8 @@ namespace ChrisWhite\B2;
 class File
 {
     protected $id;
+
+    // TODO: I reckon path should be name instead, to keep it consistent with B2's terminology.
     protected $path;
     protected $hash;
     protected $size;

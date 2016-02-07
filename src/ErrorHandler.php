@@ -7,6 +7,7 @@ use ChrisWhite\B2\Exceptions\BadJsonException;
 use ChrisWhite\B2\Exceptions\BadValueException;
 use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
 use ChrisWhite\B2\Exceptions\NotFoundException;
+use ChrisWhite\B2\Exceptions\FileNotPresentException;
 
 class ErrorHandler
 {
@@ -14,7 +15,8 @@ class ErrorHandler
         'bad_json' => BadJsonException::class,
         'bad_value' => BadValueException::class,
         'duplicate_bucket_name' => BucketAlreadyExistsException::class,
-        'not_found' => NotFoundException::class
+        'not_found' => NotFoundException::class,
+        'file_not_present' => FileNotPresentException::class
     ];
 
     public static function handleErrorResponse($response)
