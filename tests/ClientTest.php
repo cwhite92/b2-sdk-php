@@ -95,10 +95,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $bucket = $client->updateBucket('test-bucket', Bucket::TYPE_PRIVATE);
+        $bucket = $client->updateBucket([
+            'BucketId' => 'bucketId',
+            'Type' => Bucket::TYPE_PRIVATE
+        ]);
+
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('bucketId', $bucket->getId());
-        $this->assertEquals('test-bucket', $bucket->getName());
         $this->assertEquals(Bucket::TYPE_PRIVATE, $bucket->getType());
     }
 
@@ -111,10 +114,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $bucket = $client->updateBucket('test-bucket', Bucket::TYPE_PRIVATE);
+        $bucket = $client->updateBucket([
+            'BucketId' => 'bucketId',
+            'Type' => Bucket::TYPE_PUBLIC
+        ]);
+
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('bucketId', $bucket->getId());
-        $this->assertEquals('test-bucket', $bucket->getName());
         $this->assertEquals(Bucket::TYPE_PUBLIC, $bucket->getType());
     }
 

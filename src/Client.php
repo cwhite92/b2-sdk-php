@@ -69,14 +69,13 @@ class Client
     /**
      * Updates the type attribute of a bucket by the given ID.
      *
-     * @param $id
-     * @param $type
+     * @param array $options
      * @return Bucket
      * @throws ValidationException
      */
-    public function updateBucket($id, $type)
+    public function updateBucket(array $options)
     {
-        if (!in_array($type, [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+        if (!in_array($options['Type'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
             throw new ValidationException(
                 sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
             );
@@ -88,8 +87,8 @@ class Client
             ],
             'json' => [
                 'accountId' => $this->accountId,
-                'bucketId' => $id,
-                'bucketType' => $type
+                'bucketId' => $options['BucketId'],
+                'bucketType' => $options['Type']
             ]
         ]);
 
