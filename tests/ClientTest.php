@@ -162,7 +162,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $this->assertTrue($client->deleteBucket('testId'));
+        $this->assertTrue($client->deleteBucket([
+            'BucketId' => 'bucketId'
+        ]));
     }
 
     public function testBadJsonThrownDeletingNonExistentBucket()
@@ -176,7 +178,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->deleteBucket('i-dont-exist');
+        $client->deleteBucket([
+            'BucketId' => 'bucketId'
+        ]);
     }
 
     public function testUploadingResource()

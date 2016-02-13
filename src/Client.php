@@ -122,12 +122,12 @@ class Client
 
     /**
      * Deletes the bucket identified by its ID.
-     * TODO: what if you delete a bucket that already exists?
+     * @TODO: what if you try to delete a bucket with files still in it?
      *
-     * @param $id
+     * @param array $options
      * @return bool
      */
-    public function deleteBucket($id)
+    public function deleteBucket(array $options)
     {
         $this->client->request('POST', $this->apiUrl.'/b2_delete_bucket', [
             'headers' => [
@@ -135,7 +135,7 @@ class Client
             ],
             'json' => [
                 'accountId' => $this->accountId,
-                'bucketId' => $id
+                'bucketId' => $options['BucketId']
             ]
         ]);
 
