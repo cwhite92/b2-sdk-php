@@ -194,12 +194,19 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ], $history);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        // Set up the resource being uploaded.
         $content = 'The quick brown box jumps over the lazy dog';
         $resource = fopen('php://memory', 'r+');
         fwrite($resource, $content);
         rewind($resource);
 
-        $file = $client->upload('bucketId', 'test.bin', $resource);
+        $file = $client->upload([
+            'BucketId' => 'bucketId',
+            'FileName' => 'test.txt',
+            'Body' => $resource
+        ]);
+
         $this->assertInstanceOf(File::class, $file);
 
         // We'll also check the Guzzle history to make sure the upload request got created correctly.
@@ -207,7 +214,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('uploadUrl', $uploadRequest->getRequestTarget());
         $this->assertEquals('authToken', $uploadRequest->getHeader('Authorization')[0]);
         $this->assertEquals(strlen($content), $uploadRequest->getHeader('Content-Length')[0]);
-        $this->assertEquals('test.bin', $uploadRequest->getHeader('X-Bz-File-Name')[0]);
+        $this->assertEquals('test.txt', $uploadRequest->getHeader('X-Bz-File-Name')[0]);
         $this->assertEquals(sha1($content), $uploadRequest->getHeader('X-Bz-Content-Sha1')[0]);
         $this->assertEquals(round(microtime(true) * 1000), $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0], '', 100);
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
@@ -224,8 +231,15 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ], $history);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
         $content = 'The quick brown box jumps over the lazy dog';
-        $file = $client->upload('bucketId', 'test.bin', $content);
+
+        $file = $client->upload([
+            'BucketId' => 'bucketId',
+            'FileName' => 'test.txt',
+            'Body' => $content
+        ]);
+
         $this->assertInstanceOf(File::class, $file);
 
         // We'll also check the Guzzle history to make sure the upload request got created correctly.
@@ -233,7 +247,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('uploadUrl', $uploadRequest->getRequestTarget());
         $this->assertEquals('authToken', $uploadRequest->getHeader('Authorization')[0]);
         $this->assertEquals(strlen($content), $uploadRequest->getHeader('Content-Length')[0]);
-        $this->assertEquals('test.bin', $uploadRequest->getHeader('X-Bz-File-Name')[0]);
+        $this->assertEquals('test.txt', $uploadRequest->getHeader('X-Bz-File-Name')[0]);
         $this->assertEquals(sha1($content), $uploadRequest->getHeader('X-Bz-Content-Sha1')[0]);
         $this->assertEquals(round(microtime(true) * 1000), $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0], '', 100);
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());

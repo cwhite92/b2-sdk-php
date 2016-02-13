@@ -145,16 +145,14 @@ class Client
     /**
      * Uploads a file to a bucket and returns a File object.
      *
-     * @param $bucketId
-     * @param $path
-     * @param $body
-     * @return bool
+     * @param array $options
+     * @return File
      */
-    public function upload($bucketId, $path, $body)
+    public function upload(array $options)
     {
         // Clean the path if it starts with /.
-        if (substr($path, 0, 1) === '/') {
-            $path = ltrim($path, '/');
+        if (substr($options['FileName'], 0, 1) === '/') {
+            $options['FileName'] = ltrim($options['FileName'], '/');
         }
 
         // Retrieve the URL that we should be uploading to.
@@ -163,39 +161,41 @@ class Client
                 'Authorization' => $this->authToken
             ],
             'json' => [
-                'bucketId' => $bucketId
+                'bucketId' => $options['BucketId']
             ]
         ]);
 
         $uploadEndpoint = $response['uploadUrl'];
         $uploadAuthToken = $response['authorizationToken'];
 
-        if (is_resource($body)) {
-            // We need to calculate the hash incrementally from the stream.
+        if (is_resource($options['Body'])) {
+            // We need to calculate the file's hash incrementally from the stream.
             $context = hash_init('sha1');
-            hash_update_stream($context, $body);
+            hash_update_stream($context, $options['Body']);
             $hash = hash_final($context);
 
             // Similarly, we have to use fstat to get the size of the stream.
-            $size = fstat($body)['size'];
+            $size = fstat($options['Body'])['size'];
         } else {
             // We've been given a simple string body, it's super simple to calculate the hash and size.
-            $hash = sha1($body);
-            $size = mb_strlen($body);
+            $hash = sha1($options['Body']);
+            $size = mb_strlen($options['Body']);
         }
 
         $response = $this->client->request('POST', $uploadEndpoint, [
             'headers' => [
                 'Authorization' => $uploadAuthToken,
-                // TODO: work out the content type, or allow it to be passed in
+
+                // @TODO: work out the content type, or allow it to be passed in via options.
                 'Content-Type' => 'application/octet-stream',
                 'Content-Length' => $size,
-                'X-Bz-File-Name' => $path,
+                'X-Bz-File-Name' => $options['FileName'],
                 'X-Bz-Content-Sha1' => $hash,
-                // TODO: work out the last modified time
+
+                // @TODO: work out the last modified time, or allow it to be passed in via options.
                 'X-Bz-Info-src_last_modified_millis' => round(microtime(true) * 1000)
             ],
-            'body' => $body
+            'body' => $options['Body']
         ]);
 
         return new File(
