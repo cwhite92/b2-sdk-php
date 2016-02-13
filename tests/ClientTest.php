@@ -27,7 +27,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
         // Test that we get a public bucket back after creation
-        $bucket = $client->createBucket('Test bucket', Bucket::TYPE_PUBLIC);
+        $bucket = $client->createBucket([
+            'Bucket' => 'Test bucket',
+            'Type' => Bucket::TYPE_PUBLIC
+        ]);
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('Test bucket', $bucket->getName());
         $this->assertEquals(Bucket::TYPE_PUBLIC, $bucket->getType());
@@ -43,7 +46,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
         // Test that we get a private bucket back after creation
-        $bucket = $client->createBucket('Test bucket', Bucket::TYPE_PRIVATE);
+        $bucket = $client->createBucket([
+            'Bucket' => 'Test bucket',
+            'Type' => Bucket::TYPE_PRIVATE
+        ]);
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('Test bucket', $bucket->getName());
         $this->assertEquals(Bucket::TYPE_PRIVATE, $bucket->getType());
@@ -59,7 +65,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
-        $client->createBucket('I already exist', Bucket::TYPE_PRIVATE);
+        $client->createBucket([
+            'Bucket' => 'I already exist',
+            'Type' => Bucket::TYPE_PRIVATE
+        ]);
     }
 
     public function testInvalidBucketTypeThrowsException()
@@ -71,7 +80,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         ]);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
-        $client->createBucket('bucket-name', 'invalid-type');
+        $client->createBucket([
+            'Bucket' => 'Test bucket',
+            'Type' => 'i am not valid'
+        ]);
     }
 
     public function testUpdateBucketToPrivate()

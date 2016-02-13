@@ -40,14 +40,13 @@ class Client
     /**
      * Create a bucket with the given name and type.
      *
-     * @param $name
-     * @param $type
+     * @param array $options
      * @return Bucket
      * @throws ValidationException
      */
-    public function createBucket($name, $type)
+    public function createBucket(array $options)
     {
-        if (!in_array($type, [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+        if (!in_array($options['Type'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
             throw new ValidationException(
                 sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
             );
@@ -59,8 +58,8 @@ class Client
             ],
             'json' => [
                 'accountId' => $this->accountId,
-                'bucketName' => $name,
-                'bucketType' => $type
+                'bucketName' => $options['Bucket'],
+                'bucketType' => $options['Type']
             ]
         ]);
 
