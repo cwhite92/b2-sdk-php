@@ -211,45 +211,42 @@ class Client
     /**
      * Download a file identified by its ID.
      *
-     * @param $fileId
-     * @param null $savePathOrResource
-     * @return bool|string
+     * @param array $options
+     * @return bool|mixed|string
      */
-    public function downloadById($fileId, $savePathOrResource = null)
+    public function downloadById(array $options)
     {
         $response = $this->client->request('GET', $this->downloadUrl.'/b2api/v1/b2_download_file_by_id', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
             'query' => [
-                'fileId' => $fileId
+                'fileId' => $options['FileId']
             ],
-            'sink' => $savePathOrResource
+            'sink' => isset($options['Sink']) ? $options['Sink'] : null
         ], false);
 
-        return is_null($savePathOrResource) ? $response : true;
+        return isset($options['Sink']) ? true : $response;
     }
 
     /**
      * Download a file identified by its path.
      *
-     * @param $bucketName
-     * @param $filePath
-     * @param null $savePathOrResource
-     * @return bool|string
+     * @param array $options
+     * @return bool|mixed|string
      */
-    public function downloadByPath($bucketName, $filePath, $savePathOrResource = null)
+    public function downloadByPath(array $options)
     {
-        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $bucketName, $filePath);
+        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['Bucket'], $options['FileName']);
 
         $response = $this->client->request('GET', $url, [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
-            'sink' => $savePathOrResource
+            'sink' => isset($options['Sink']) ? $options['Sink'] : null
         ], false);
 
-        return is_null($savePathOrResource) ? $response : true;
+        return isset($options['Sink']) ? true : $response;
     }
 
     /**

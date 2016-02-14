@@ -262,7 +262,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $fileContent = $client->downloadById('fileId');
+        $fileContent = $client->downloadById([
+            'FileId' => 'fileId'
+        ]);
 
         $this->assertEquals($fileContent, 'The quick brown fox jumps over the lazy dog');
     }
@@ -276,7 +278,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById('fileId', __DIR__.'/test.txt');
+        $client->downloadById([
+            'FileId' => 'fileId',
+            'Sink' => __DIR__.'/test.txt'
+        ]);
 
         $this->assertFileExists(__DIR__.'/test.txt');
         $this->assertEquals('The quick brown fox jumps over the lazy dog', file_get_contents(__DIR__.'/test.txt'));
@@ -295,7 +300,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById('incorrectFileId');
+        $client->downloadById([
+            'FileId' => 'incorrect'
+        ]);
     }
 
     public function testDownloadByPathWithoutSavePath()
@@ -307,7 +314,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $fileContent = $client->downloadByPath('test-bucket', 'fileId');
+        $fileContent = $client->downloadByPath([
+            'Bucket' => 'test-bucket',
+            'FileName' => 'test.txt'
+        ]);
 
         $this->assertEquals($fileContent, 'The quick brown fox jumps over the lazy dog');
     }
@@ -321,7 +331,11 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById('fileId', __DIR__.'/test.txt');
+        $client->downloadByPath([
+            'Bucket' => 'test-bucket',
+            'FileName' => 'test.txt',
+            'Sink' => __DIR__.'/test.txt'
+        ]);
 
         $this->assertFileExists(__DIR__.'/test.txt');
         $this->assertEquals('The quick brown fox jumps over the lazy dog', file_get_contents(__DIR__.'/test.txt'));
@@ -340,7 +354,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadByPath('bucket-name', '/incorrect/path/to/file');
+        $client->downloadByPath([
+            'Bucket' => 'test-bucket',
+            'FileName' => 'path/to/incorrect/file.txt'
+        ]);
     }
 
     public function testListFilesHandlesMultiplePages()
