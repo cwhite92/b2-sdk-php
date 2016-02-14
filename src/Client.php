@@ -252,10 +252,10 @@ class Client
     /**
      * Retrieve a collection of File objects representing the files stored inside a bucket.
      *
-     * @param $bucketId
+     * @param array $options
      * @return array
      */
-    public function listFiles($bucketId)
+    public function listFiles(array $options)
     {
         $nextFileName = null;
         $files = [];
@@ -267,7 +267,7 @@ class Client
                     'Authorization' => $this->authToken
                 ],
                 'json' => [
-                    'bucketId' => $bucketId,
+                    'bucketId' => $options['BucketId'],
                     'startFileName' => $nextFileName,
                     'maxFileCount' => 10
                 ]
@@ -291,17 +291,17 @@ class Client
     /**
      * Returns a single File object representing a file stored on B2.
      *
-     * @param $fileId
+     * @param array $options
      * @return File
      */
-    public function getFile($fileId)
+    public function getFile(array $options)
     {
         $response = $this->client->request('POST', $this->apiUrl.'/b2_get_file_info', [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
             'json' => [
-                'fileId' => $fileId
+                'fileId' => $options['FileId']
             ]
         ]);
 
@@ -318,16 +318,15 @@ class Client
     /**
      * Deletes the file identified by ID from Backblaze B2.
      *
-     * @param $fileId
-     * @param null $fileName
+     * @param array $options
      * @return bool
      */
-    public function deleteFile($fileId, $fileName = null)
+    public function deleteFile(array $options)
     {
-        if ($fileName === null) {
-            $file = $this->getFile($fileId);
+        if (!isset($options['FileName'])) {
+            $file = $this->getFile($options);
 
-            $fileName = $file->getPath();
+            $options['FileName'] = $file->getPath();
         }
 
         $this->client->request('POST', $this->apiUrl.'/b2_delete_file_version', [
@@ -335,8 +334,8 @@ class Client
                 'Authorization' => $this->authToken
             ],
             'json' => [
-                'fileName' => $fileName,
-                'fileId' => $fileId
+                'fileName' => $options['FileName'],
+                'fileId' => $options['FileId']
             ]
         ]);
 

@@ -370,7 +370,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $files = $client->listFiles('bucketId');
+        $files = $client->listFiles([
+            'BucketId' => 'bucketId'
+        ]);
 
         $this->assertInternalType('array', $files);
         $this->assertInstanceOf(File::class, $files[0]);
@@ -386,7 +388,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $files = $client->listFiles('bucketId');
+        $files = $client->listFiles([
+            'BucketId' => 'bucketId'
+        ]);
 
         $this->assertInternalType('array', $files);
         $this->assertCount(0, $files);
@@ -401,7 +405,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $file = $client->getFile('fileId');
+        $file = $client->getFile([
+            'FileId' => 'fileId'
+        ]);
 
         $this->assertInstanceOf(File::class, $file);
     }
@@ -417,7 +423,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $file = $client->getFile('nonExistentFileId');
+        $client->getFile([
+            'FileId' => 'fileId'
+        ]);
     }
 
     public function testDeleteFile()
@@ -430,7 +438,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $this->assertTrue($client->deleteFile('fileId'));
+        $this->assertTrue($client->deleteFile([
+            'FileId' => 'fileId'
+        ]));
     }
 
     public function testDeleteFileRetrievesFileNameWhenNotProvided()
@@ -443,7 +453,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $this->assertTrue($client->deleteFile('fileId'));
+        $this->assertTrue($client->deleteFile([
+            'FileId' => 'fileId'
+        ]));
     }
 
     public function testDeletingNonExistentFileThrowsException()
@@ -457,6 +469,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $this->assertTrue($client->deleteFile('fileId', 'fileName'));
+        $this->assertTrue($client->deleteFile([
+            'FileId' => 'fileId',
+            'FileName' => 'fileName'
+        ]));
     }
 }
