@@ -162,6 +162,10 @@ class Client
             $options['FileName'] = ltrim($options['FileName'], '/');
         }
 
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+
         // Retrieve the URL that we should be uploading to.
         $response = $this->client->request('POST', $this->apiUrl.'/b2_get_upload_url', [
             'headers' => [
