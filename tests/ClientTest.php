@@ -279,7 +279,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $fileContent = $client->downloadById([
+        $fileContent = $client->download([
             'FileId' => 'fileId'
         ]);
 
@@ -295,7 +295,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById([
+        $client->download([
             'FileId' => 'fileId',
             'SaveAs' => __DIR__.'/test.txt'
         ]);
@@ -317,7 +317,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadById([
+        $client->download([
             'FileId' => 'incorrect'
         ]);
     }
@@ -331,7 +331,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $fileContent = $client->downloadByPath([
+        $fileContent = $client->download([
             'BucketName' => 'test-bucket',
             'FileName' => 'test.txt'
         ]);
@@ -348,7 +348,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadByPath([
+        $client->download([
             'BucketName' => 'test-bucket',
             'FileName' => 'test.txt',
             'SaveAs' => __DIR__.'/test.txt'
@@ -371,7 +371,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
-        $client->downloadByPath([
+        $client->download([
             'BucketName' => 'test-bucket',
             'FileName' => 'path/to/incorrect/file.txt'
         ]);

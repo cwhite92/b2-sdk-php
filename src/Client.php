@@ -220,42 +220,33 @@ class Client
     }
 
     /**
-     * Download a file identified by its ID.
+     * Download a file from a B2 bucket.
      *
      * @param array $options
      * @return bool|mixed|string
      */
-    public function downloadById(array $options)
+    public function download(array $options)
     {
-        $response = $this->client->request('GET', $this->downloadUrl.'/b2api/v1/b2_download_file_by_id', [
-            'headers' => [
-                'Authorization' => $this->authToken
-            ],
-            'query' => [
-                'fileId' => $options['FileId']
-            ],
-            'sink' => isset($options['SaveAs']) ? $options['SaveAs'] : null
-        ], false);
-
-        return isset($options['SaveAs']) ? true : $response;
-    }
-
-    /**
-     * Download a file identified by its path.
-     *
-     * @param array $options
-     * @return bool|mixed|string
-     */
-    public function downloadByPath(array $options)
-    {
-        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['BucketName'], $options['FileName']);
-
-        $response = $this->client->request('GET', $url, [
+        $requestUrl = null;
+        $requestOptions = [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
             'sink' => isset($options['SaveAs']) ? $options['SaveAs'] : null
-        ], false);
+        ];
+
+        if (isset($options['FileId'])) {
+            $requestOptions['query'] = ['fileId' => $options['FileId']];
+            $requestUrl = $this->downloadUrl.'/b2api/v1/b2_download_file_by_id';
+        } else {
+            if (!isset($options['BucketName']) && isset($options['BucketId'])) {
+                $options['BucketName'] = $this->getBucketNameFromId($options['BucketId']);
+            }
+
+            $requestUrl = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['BucketName'], $options['FileName']);
+        }
+
+        $response = $this->client->request('GET', $requestUrl, $requestOptions, false);
 
         return isset($options['SaveAs']) ? true : $response;
     }
