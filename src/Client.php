@@ -81,6 +81,10 @@ class Client
             );
         }
 
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+
         $response = $this->client->request('POST', $this->apiUrl.'/b2_update_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken,
@@ -128,6 +132,10 @@ class Client
      */
     public function deleteBucket(array $options)
     {
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+
         $this->client->request('POST', $this->apiUrl.'/b2_delete_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken
@@ -355,5 +363,43 @@ class Client
         $this->authToken = $response['authorizationToken'];
         $this->apiUrl = $response['apiUrl'].'/b2api/v1';
         $this->downloadUrl = $response['downloadUrl'];
+    }
+
+    /**
+     * Maps the provided bucket name to the appropriate bucket ID.
+     *
+     * @param $name
+     * @return null
+     */
+    protected function getBucketIdFromName($name)
+    {
+        $buckets = $this->listBuckets();
+
+        foreach ($buckets as $bucket) {
+            if ($bucket->getName() === $name) {
+                return $bucket->getId();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Maps the provided bucket ID to the appropriate bucket name.
+     *
+     * @param $id
+     * @return null
+     */
+    protected function getBucketNameFromId($id)
+    {
+        $buckets = $this->listBuckets();
+
+        foreach ($buckets as $bucket) {
+            if ($bucket->getId() === $id) {
+                return $bucket->getName();
+            }
+        }
+
+        return null;
     }
 }
