@@ -122,7 +122,6 @@ class Client
 
     /**
      * Deletes the bucket identified by its ID.
-     * @TODO: what if you try to delete a bucket with files still in it?
      *
      * @param array $options
      * @return bool

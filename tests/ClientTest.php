@@ -5,6 +5,7 @@ namespace ChrisWhite\B2\Tests;
 use ChrisWhite\B2\Client;
 use ChrisWhite\B2\Bucket;
 use ChrisWhite\B2\Exceptions\BadValueException;
+use ChrisWhite\B2\Exceptions\BucketNotEmptyException;
 use ChrisWhite\B2\Exceptions\NotFoundException;
 use ChrisWhite\B2\File;
 use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
@@ -174,6 +175,22 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $guzzle = $this->buildGuzzleFromResponses([
             $this->buildResponseFromStub(200, [], 'authorize_account.json'),
             $this->buildResponseFromStub(400, [], 'delete_bucket_non_existent.json')
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $client->deleteBucket([
+            'BucketId' => 'bucketId'
+        ]);
+    }
+
+    public function testBucketNotEmptyThrownDeletingNonEmptyBucket()
+    {
+        $this->setExpectedException(BucketNotEmptyException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(400, [], 'bucket_not_empty.json')
         ]);
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
