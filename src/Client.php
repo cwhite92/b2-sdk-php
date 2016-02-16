@@ -46,7 +46,7 @@ class Client
      */
     public function createBucket(array $options)
     {
-        if (!in_array($options['Type'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+        if (!in_array($options['BucketType'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
             throw new ValidationException(
                 sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
             );
@@ -58,8 +58,8 @@ class Client
             ],
             'json' => [
                 'accountId' => $this->accountId,
-                'bucketName' => $options['Bucket'],
-                'bucketType' => $options['Type']
+                'bucketName' => $options['BucketName'],
+                'bucketType' => $options['BucketType']
             ]
         ]);
 
@@ -75,7 +75,7 @@ class Client
      */
     public function updateBucket(array $options)
     {
-        if (!in_array($options['Type'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
+        if (!in_array($options['BucketType'], [Bucket::TYPE_PUBLIC, Bucket::TYPE_PRIVATE])) {
             throw new ValidationException(
                 sprintf('Bucket type must be %s or %s', Bucket::TYPE_PRIVATE, Bucket::TYPE_PUBLIC)
             );
@@ -88,7 +88,7 @@ class Client
             'json' => [
                 'accountId' => $this->accountId,
                 'bucketId' => $options['BucketId'],
-                'bucketType' => $options['Type']
+                'bucketType' => $options['BucketType']
             ]
         ]);
 
@@ -223,10 +223,10 @@ class Client
             'query' => [
                 'fileId' => $options['FileId']
             ],
-            'sink' => isset($options['Sink']) ? $options['Sink'] : null
+            'sink' => isset($options['SaveAs']) ? $options['SaveAs'] : null
         ], false);
 
-        return isset($options['Sink']) ? true : $response;
+        return isset($options['SaveAs']) ? true : $response;
     }
 
     /**
@@ -237,16 +237,16 @@ class Client
      */
     public function downloadByPath(array $options)
     {
-        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['Bucket'], $options['FileName']);
+        $url = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['BucketName'], $options['FileName']);
 
         $response = $this->client->request('GET', $url, [
             'headers' => [
                 'Authorization' => $this->authToken
             ],
-            'sink' => isset($options['Sink']) ? $options['Sink'] : null
+            'sink' => isset($options['SaveAs']) ? $options['SaveAs'] : null
         ], false);
 
-        return isset($options['Sink']) ? true : $response;
+        return isset($options['SaveAs']) ? true : $response;
     }
 
     /**

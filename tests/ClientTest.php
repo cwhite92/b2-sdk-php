@@ -28,8 +28,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         // Test that we get a public bucket back after creation
         $bucket = $client->createBucket([
-            'Bucket' => 'Test bucket',
-            'Type' => Bucket::TYPE_PUBLIC
+            'BucketName' => 'Test bucket',
+            'BucketType' => Bucket::TYPE_PUBLIC
         ]);
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('Test bucket', $bucket->getName());
@@ -47,8 +47,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         // Test that we get a private bucket back after creation
         $bucket = $client->createBucket([
-            'Bucket' => 'Test bucket',
-            'Type' => Bucket::TYPE_PRIVATE
+            'BucketName' => 'Test bucket',
+            'BucketType' => Bucket::TYPE_PRIVATE
         ]);
         $this->assertInstanceOf(Bucket::class, $bucket);
         $this->assertEquals('Test bucket', $bucket->getName());
@@ -66,8 +66,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
         $client->createBucket([
-            'Bucket' => 'I already exist',
-            'Type' => Bucket::TYPE_PRIVATE
+            'BucketName' => 'I already exist',
+            'BucketType' => Bucket::TYPE_PRIVATE
         ]);
     }
 
@@ -81,8 +81,8 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
         $client->createBucket([
-            'Bucket' => 'Test bucket',
-            'Type' => 'i am not valid'
+            'BucketName' => 'Test bucket',
+            'BucketType' => 'i am not valid'
         ]);
     }
 
@@ -97,7 +97,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $bucket = $client->updateBucket([
             'BucketId' => 'bucketId',
-            'Type' => Bucket::TYPE_PRIVATE
+            'BucketType' => Bucket::TYPE_PRIVATE
         ]);
 
         $this->assertInstanceOf(Bucket::class, $bucket);
@@ -116,7 +116,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $bucket = $client->updateBucket([
             'BucketId' => 'bucketId',
-            'Type' => Bucket::TYPE_PUBLIC
+            'BucketType' => Bucket::TYPE_PUBLIC
         ]);
 
         $this->assertInstanceOf(Bucket::class, $bucket);
@@ -280,7 +280,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $client->downloadById([
             'FileId' => 'fileId',
-            'Sink' => __DIR__.'/test.txt'
+            'SaveAs' => __DIR__.'/test.txt'
         ]);
 
         $this->assertFileExists(__DIR__.'/test.txt');
@@ -315,7 +315,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
         $fileContent = $client->downloadByPath([
-            'Bucket' => 'test-bucket',
+            'BucketName' => 'test-bucket',
             'FileName' => 'test.txt'
         ]);
 
@@ -332,9 +332,9 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
         $client->downloadByPath([
-            'Bucket' => 'test-bucket',
+            'BucketName' => 'test-bucket',
             'FileName' => 'test.txt',
-            'Sink' => __DIR__.'/test.txt'
+            'SaveAs' => __DIR__.'/test.txt'
         ]);
 
         $this->assertFileExists(__DIR__.'/test.txt');
@@ -355,7 +355,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $client = new Client('testId', 'testKey', ['client' => $guzzle]);
 
         $client->downloadByPath([
-            'Bucket' => 'test-bucket',
+            'BucketName' => 'test-bucket',
             'FileName' => 'path/to/incorrect/file.txt'
         ]);
     }
