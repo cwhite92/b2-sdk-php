@@ -270,6 +270,36 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
     }
 
+    public function testUploadingWithCustomMimeAndLastModified()
+    {
+        $container = [];
+        $history = Middleware::history($container);
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_upload_url.json'),
+            $this->buildResponseFromStub(200, [], 'upload.json')
+        ], $history);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        // My birthday :)
+        $lastModified =  701568000000;
+
+        $file = $client->upload([
+            'BucketId' => 'bucketId',
+            'FileName' => 'test.txt',
+            'Body' => 'Test file content',
+            'FileLastModified' => $lastModified
+        ]);
+
+        $this->assertInstanceOf(File::class, $file);
+
+        // We'll also check the Guzzle history to make sure the upload request got created correctly.
+        $uploadRequest = $container[2]['request'];
+        $this->assertEquals($lastModified, $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0]);
+        $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
+    }
+
     public function testDownloadByIdWithoutSavePath()
     {
         $guzzle = $this->buildGuzzleFromResponses([

@@ -193,18 +193,20 @@ class Client
             $size = mb_strlen($options['Body']);
         }
 
+        if (!isset($options['FileLastModified'])) {
+            $options['FileLastModified'] = round(microtime(true) * 1000);
+        }
+
+        $options['FileContentType'] = 'application/octet-stream';
+
         $response = $this->client->request('POST', $uploadEndpoint, [
             'headers' => [
                 'Authorization' => $uploadAuthToken,
-
-                // @TODO: work out the content type, or allow it to be passed in via options.
-                'Content-Type' => 'application/octet-stream',
+                'Content-Type' => $options['FileContentType'],
                 'Content-Length' => $size,
                 'X-Bz-File-Name' => $options['FileName'],
                 'X-Bz-Content-Sha1' => $hash,
-
-                // @TODO: work out the last modified time, or allow it to be passed in via options.
-                'X-Bz-Info-src_last_modified_millis' => round(microtime(true) * 1000)
+                'X-Bz-Info-src_last_modified_millis' => $options['FileLastModified']
             ],
             'body' => $options['Body']
         ]);
