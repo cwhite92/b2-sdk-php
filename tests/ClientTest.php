@@ -270,7 +270,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
     }
 
-    public function testUploadingWithCustomMimeAndLastModified()
+    public function testUploadingWithCustomContentTypeAndLastModified()
     {
         $container = [];
         $history = Middleware::history($container);
@@ -284,11 +284,13 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         // My birthday :)
         $lastModified =  701568000000;
+        $contentType = 'text/plain';
 
         $file = $client->upload([
             'BucketId' => 'bucketId',
             'FileName' => 'test.txt',
             'Body' => 'Test file content',
+            'FileContentType' => $contentType,
             'FileLastModified' => $lastModified
         ]);
 
@@ -297,6 +299,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase
         // We'll also check the Guzzle history to make sure the upload request got created correctly.
         $uploadRequest = $container[2]['request'];
         $this->assertEquals($lastModified, $uploadRequest->getHeader('X-Bz-Info-src_last_modified_millis')[0]);
+        $this->assertEquals($contentType, $uploadRequest->getHeader('Content-Type')[0]);
         $this->assertInstanceOf(Stream::class, $uploadRequest->getBody());
     }
 

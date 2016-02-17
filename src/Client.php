@@ -197,7 +197,9 @@ class Client
             $options['FileLastModified'] = round(microtime(true) * 1000);
         }
 
-        $options['FileContentType'] = 'application/octet-stream';
+        if (!isset($options['FileContentType'])) {
+            $options['FileContentType'] = 'b2/x-auto';
+        }
 
         $response = $this->client->request('POST', $uploadEndpoint, [
             'headers' => [
