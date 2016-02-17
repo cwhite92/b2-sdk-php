@@ -257,6 +257,7 @@ class Client
 
     /**
      * Retrieve a collection of File objects representing the files stored inside a bucket.
+     * // @TODO: allow specifying bucket via its name.
      *
      * @param array $options
      * @return array
@@ -275,7 +276,7 @@ class Client
                 'json' => [
                     'bucketId' => $options['BucketId'],
                     'startFileName' => $nextFileName,
-                    'maxFileCount' => 10
+                    'maxFileCount' => 1000
                 ]
             ]);
 
@@ -296,6 +297,7 @@ class Client
 
     /**
      * Returns a single File object representing a file stored on B2.
+     * @TODO: allow specifying file via its name and bucket.
      *
      * @param array $options
      * @return File
@@ -323,6 +325,7 @@ class Client
 
     /**
      * Deletes the file identified by ID from Backblaze B2.
+     * @TODO: allow deleting a file via its name and bucket.
      *
      * @param array $options
      * @return bool
