@@ -1,46 +1,72 @@
 ## Backblaze B2 SDK for PHP
 
-`b2-sdk-php` is a small(ish) client library for working with Backblaze's B2 storage service. It aims to make using the
-service as easy as possible while taking influence from other, similar clients.
-
-**Note:** This package is not production ready.
+`b2-sdk-php` is a client library for working with Backblaze's B2 storage service. It aims to make using the service as
+easy as possible by exposing a clear API and taking influence from other SDKs that you may be familiar with.
 
 ## Example
 
-The API is subject to change.
+This is just a short example, full examples to come on the wiki.
 
 ```php
+use ChrisWhite\B2\Client;
+use ChrisWhite\B2\Bucket;
+
 $client = new Client('accountId', 'applicationKey');
 
 // Returns a Bucket object.
-$bucket = $client->createBucket('bucket-name', Bucket::TYPE_PUBLIC);
+$bucket = $client->createBucket([
+    'BucketName' => 'my-special-bucket',
+    'BucketType' => Bucket::TYPE_PRIVATE // or TYPE_PUBLIC
+]);
 
-// Change the bucket to private.
-$updatedBucket = $client->updateBucket($bucket->getId(), Bucket::TYPE_PRIVATE);
+// Change the bucket to private. Also returns a Bucket object.
+$updatedBucket = $client->updateBucket([
+    'BucketId' => $bucket->getId(),
+    'BucketType' => Bucket::TYPE_PUBLIC
+]);
 
-// Retrieve a list of Bucket objects representing the buckets on your account.
+// Retrieve an array of Bucket objects on your account.
 $buckets = $client->listBuckets();
 
-// Delete a bucket
-$client->deleteBucket($bucket->getId());
+// Delete a bucket.
+$client->deleteBucket([
+    'BucketId' => '4c2b957661da9c825f465e1b'
+]);
 
-// Upload a file as a string or from a resource. Returns a File object.
-$stringFile = $client->upload($bucket->getId(), '/path/to/upload/to', 'Lorem ipsum.');
-$handle = fopen('/path/to/file/to/upload', 'r');
-$resourceFile = $client->upload($bucket->getId(), '/path/to/upload/to', $handle);
+// Upload a file to a bucket. Returns a File object.
+$file = $client->upload([
+    'BucketName' => 'my-special-bucket',
+    'FileName' => 'path/to/upload/to',
+    'Body' => 'I am the file content'
 
-// Downloads a file by its file ID or path, storing it in a variable or saving to a file on disk.
-$fileContent = $client->downloadById($file->getId());
-$client->downloadByPath($bucket->getName(), $file->getId(), '/path/to/save/to');
+    // The file content can also be provided via a resource.
+    // 'Body' => fopen('/path/to/input', 'r')
+]);
+
+// Download a file from a bucket. Returns the file content.
+$fileContent = $client->download([
+    'FileId' => $file->getId()
+
+    // Can also identify the file via bucket and path:
+    // 'BucketName' => 'my-special-bucket',
+    // 'FileName' => 'path/to/file'
+
+    // Can also save directly to a location on disk. This will cause download() to not return file content.
+    // 'SaveAs' => '/path/to/save/location'
+]);
 ```
 
 ## Installation
 
-To come.
+Installation is via Composer:
+
+```bash
+$ composer require cwhite92/b2-sdk-php
+```
 
 ## Tests
 
-Tests are run with PHPUnit. After installing PHPUnit via composer:
+Tests are run with PHPUnit. After installing PHPUnit via Composer:
 
 ```bash
 $ vendor/bin/phpunit
