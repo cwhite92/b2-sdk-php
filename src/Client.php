@@ -257,7 +257,6 @@ class Client
 
     /**
      * Retrieve a collection of File objects representing the files stored inside a bucket.
-     * // @TODO: allow specifying bucket via its name.
      *
      * @param array $options
      * @return array
@@ -266,6 +265,10 @@ class Client
     {
         $nextFileName = null;
         $files = [];
+
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
 
         // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
         while (true) {
