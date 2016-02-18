@@ -5,9 +5,7 @@ namespace ChrisWhite\B2;
 class File
 {
     protected $id;
-
-    // TODO: I reckon path should be name instead, to keep it consistent with B2's terminology.
-    protected $path;
+    protected $name;
     protected $hash;
     protected $size;
     protected $type;
@@ -17,16 +15,16 @@ class File
      * File constructor.
      *
      * @param $id
-     * @param $path
+     * @param $name
      * @param $hash
      * @param $size
      * @param $type
      * @param $info
      */
-    public function __construct($id, $path, $hash = null, $size = null, $type = null, $info = null)
+    public function __construct($id, $name, $hash = null, $size = null, $type = null, $info = null)
     {
         $this->id = $id;
-        $this->path = $path;
+        $this->name = $name;
         $this->hash = $hash;
         $this->size = $size;
         $this->type = $type;
@@ -44,9 +42,9 @@ class File
     /**
      * @return string
      */
-    public function getPath()
+    public function getName()
     {
-        return $this->path;
+        return $this->name;
     }
 
     /**

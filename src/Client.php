@@ -307,6 +307,10 @@ class Client
      */
     public function getFile(array $options)
     {
+        if (!isset($options['FileId']) && isset($options['BucketName']) && isset($options['FileName'])) {
+            $options['FileId'] = $this->getFileIdFromBucketAndFileName($options['BucketName'], $options['FileName']);
+        }
+
         $response = $this->client->request('POST', $this->apiUrl.'/b2_get_file_info', [
             'headers' => [
                 'Authorization' => $this->authToken
@@ -338,7 +342,7 @@ class Client
         if (!isset($options['FileName'])) {
             $file = $this->getFile($options);
 
-            $options['FileName'] = $file->getPath();
+            $options['FileName'] = $file->getName();
         }
 
         $this->client->request('POST', $this->apiUrl.'/b2_delete_file_version', [
@@ -402,6 +406,21 @@ class Client
         foreach ($buckets as $bucket) {
             if ($bucket->getId() === $id) {
                 return $bucket->getName();
+            }
+        }
+
+        return null;
+    }
+
+    protected function getFileIdFromBucketAndFileName($bucketName, $fileName)
+    {
+        $files = $this->listFiles([
+            'BucketName' => $bucketName
+        ]);
+
+        foreach ($files as $file) {
+            if ($file->getName() === $fileName) {
+                return $file->getId();
             }
         }
 
