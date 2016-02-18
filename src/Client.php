@@ -300,7 +300,6 @@ class Client
 
     /**
      * Returns a single File object representing a file stored on B2.
-     * @TODO: allow specifying file via its name and bucket.
      *
      * @param array $options
      * @return File
@@ -332,7 +331,6 @@ class Client
 
     /**
      * Deletes the file identified by ID from Backblaze B2.
-     * @TODO: allow deleting a file via its name and bucket.
      *
      * @param array $options
      * @return bool
@@ -343,6 +341,12 @@ class Client
             $file = $this->getFile($options);
 
             $options['FileName'] = $file->getName();
+        }
+
+        if (!isset($options['FileId']) && isset($options['BucketName']) && isset($options['FileName'])) {
+            $file = $this->getFile($options);
+
+            $options['FileId'] = $file->getId();
         }
 
         $this->client->request('POST', $this->apiUrl.'/b2_delete_file_version', [
