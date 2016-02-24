@@ -187,6 +187,9 @@ class Client
 
             // Similarly, we have to use fstat to get the size of the stream.
             $size = fstat($options['Body'])['size'];
+            
+            // Rewind the stream before passing it to the HTTP client.
+            rewind($options['Body']);
         } else {
             // We've been given a simple string body, it's super simple to calculate the hash and size.
             $hash = sha1($options['Body']);
