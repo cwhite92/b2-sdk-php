@@ -1,4 +1,6 @@
 ## Backblaze B2 SDK for PHP
+[![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![Latest Version](https://img.shields.io/github/release/cwhite92/b2-sdk-php.svg?style=flat-square)](https://github.com/cwhite92/b2-sdk-php/releases)
 
 `b2-sdk-php` is a client library for working with Backblaze's B2 storage service. It aims to make using the service as
 easy as possible by exposing a clear API and taking influence from other SDKs that you may be familiar with.
