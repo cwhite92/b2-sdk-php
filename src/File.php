@@ -78,5 +78,4 @@ class File
     {
         return $this->info;
     }
-
 }
