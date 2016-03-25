@@ -9,6 +9,7 @@ use ChrisWhite\B2\Exceptions\BucketAlreadyExistsException;
 use ChrisWhite\B2\Exceptions\NotFoundException;
 use ChrisWhite\B2\Exceptions\FileNotPresentException;
 use ChrisWhite\B2\Exceptions\BucketNotEmptyException;
+use GuzzleHttp\Psr7\Response;
 
 class ErrorHandler
 {
@@ -21,7 +22,7 @@ class ErrorHandler
         'cannot_delete_non_empty_bucket' => BucketNotEmptyException::class
     ];
 
-    public static function handleErrorResponse($response)
+    public static function handleErrorResponse(Response $response)
     {
         $responseJson = json_decode($response->getBody(), true);
 
