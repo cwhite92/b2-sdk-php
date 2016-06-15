@@ -266,11 +266,20 @@ class Client
      */
     public function listFiles(array $options)
     {
+        // if FileName is set, we only attempt to retrieve information about that single file.
+        $fileName = !empty($options['FileName']) ? $options['FileName'] : null;
+
         $nextFileName = null;
+        $maxFileCount = 1000;
         $files = [];
 
         if (!isset($options['BucketId']) && isset($options['BucketName'])) {
             $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+
+        if ($fileName) {
+            $nextFileName = $fileName;
+            $maxFileCount = 1;
         }
 
         // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
@@ -282,15 +291,18 @@ class Client
                 'json' => [
                     'bucketId' => $options['BucketId'],
                     'startFileName' => $nextFileName,
-                    'maxFileCount' => 1000
+                    'maxFileCount' => $maxFileCount,
                 ]
             ]);
 
             foreach ($response['files'] as $file) {
-                $files[] = new File($file['fileId'], $file['fileName'], null, $file['size']);
+                // if we have a file name set, only retrieve information if the file name matches
+                if (!$fileName || ($fileName === $file['fileName'])) {
+                    $files[] = new File($file['fileId'], $file['fileName'], null, $file['size']);
+                }
             }
 
-            if ($response['nextFileName'] === null) {
+            if ($fileName || $response['nextFileName'] === null) {
                 // We've got all the files - break out of loop.
                 break;
             }
@@ -300,6 +312,19 @@ class Client
 
         return $files;
     }
+
+    /**
+     * Test whether a file exists in B2 for the given bucket.
+     *
+     * @param array $options
+     * @return boolean
+     */
+    public function fileExists(array $options) {
+        $files = $this->listFiles($options);
+
+        return !empty($files);
+    }
+
 
     /**
      * Returns a single File object representing a file stored on B2.
@@ -328,7 +353,10 @@ class Client
             $response['contentSha1'],
             $response['contentLength'],
             $response['contentType'],
-            $response['fileInfo']
+            $response['fileInfo'],
+            $response['bucketId'],
+            $response['action'],
+            $response['uploadTimestamp']
         );
     }
 
@@ -422,7 +450,8 @@ class Client
     protected function getFileIdFromBucketAndFileName($bucketName, $fileName)
     {
         $files = $this->listFiles([
-            'BucketName' => $bucketName
+            'BucketName' => $bucketName,
+            'FileName' => $fileName,
         ]);
 
         foreach ($files as $file) {
