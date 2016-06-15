@@ -8,5 +8,7 @@
   "fileInfo": {
     "src_last_modified_millis": "1454721688784"
   },
+  "action": "upload",
+  "uploadTimestamp": "1465983870000",
   "fileName": "Test file.bin"
 }
