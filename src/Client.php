@@ -319,7 +319,8 @@ class Client
      * @param array $options
      * @return boolean
      */
-    public function fileExists(array $options) {
+    public function fileExists(array $options)
+    {
         $files = $this->listFiles($options);
 
         return !empty($files);
