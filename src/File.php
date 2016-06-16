@@ -10,6 +10,9 @@ class File
     protected $size;
     protected $type;
     protected $info;
+    protected $bucketId;
+    protected $action;
+    protected $uploadTimestamp;
 
     /**
      * File constructor.
@@ -20,8 +23,11 @@ class File
      * @param $size
      * @param $type
      * @param $info
+     * @param $bucketId
+     * @param $action
+     * @param $uploadTimestamp
      */
-    public function __construct($id, $name, $hash = null, $size = null, $type = null, $info = null)
+    public function __construct($id, $name, $hash = null, $size = null, $type = null, $info = null, $bucketId = null, $action = null, $uploadTimestamp = null)
     {
         $this->id = $id;
         $this->name = $name;
@@ -29,6 +35,9 @@ class File
         $this->size = $size;
         $this->type = $type;
         $this->info = $info;
+        $this->bucketId = $bucketId;
+        $this->action = $action;
+        $this->uploadTimestamp = $uploadTimestamp;
     }
 
     /**
@@ -77,5 +86,29 @@ class File
     public function getInfo()
     {
         return $this->info;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBucketId()
+    {
+        return $this->bucketId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getAction()
+    {
+        return $this->action;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUploadTimestamp()
+    {
+        return $this->uploadTimestamp;
     }
 }
