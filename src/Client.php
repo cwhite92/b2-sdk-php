@@ -2,6 +2,7 @@
 
 namespace ChrisWhite\B2;
 
+use ChrisWhite\B2\Exceptions\NotFoundException;
 use ChrisWhite\B2\Exceptions\ValidationException;
 use ChrisWhite\B2\Http\Client as HttpClient;
 
@@ -331,12 +332,17 @@ class Client
      * Returns a single File object representing a file stored on B2.
      *
      * @param array $options
+     * @throws NotFoundException If no file id was provided and BucketName + FileName does not resolve to a file, a NotFoundException is thrown.
      * @return File
      */
     public function getFile(array $options)
     {
         if (!isset($options['FileId']) && isset($options['BucketName']) && isset($options['FileName'])) {
             $options['FileId'] = $this->getFileIdFromBucketAndFileName($options['BucketName'], $options['FileName']);
+
+            if (!$options['FileId']) {
+                throw new NotFoundException();
+            }
         }
 
         $response = $this->client->request('POST', $this->apiUrl.'/b2_get_file_info', [
