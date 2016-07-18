@@ -34,7 +34,7 @@ class Client
             $this->client = new HttpClient(['exceptions' => false]);
         }
 
-        $this->authoriseAccount();
+        $this->authorizeAccount();
     }
 
     /**
@@ -395,11 +395,11 @@ class Client
     }
 
     /**
-     * Authorise the B2 account in order to get an auth token and API/download URLs.
+     * Authorize the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception
      */
-    protected function authoriseAccount()
+    protected function authorizeAccount()
     {
         $response = $this->client->request('GET', 'https://api.backblaze.com/b2api/v1/b2_authorize_account', [
             'auth' => [$this->accountId, $this->applicationKey]
