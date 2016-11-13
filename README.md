@@ -72,6 +72,19 @@ $fileDelete = $client->deleteFile([
 $fileList = $client->listFiles([
     'BucketId' => '4d2dbbe08e1e983c5e6f0d12'
 ]);
+
+// Retrieve file versions from a bucket. Returns an array.
+$fileVersions = $client->listFileVersions([
+    'BucketId' => '4d2dbbe08e1e983c5e6f0d12',
+
+    // Optional Parameters
+    // 'StartFileName' => 'my-start-file-name',
+    // 'StartFileId' => 'my-start-file-id',
+    // 'MaxFileCount' => 'max-files-to-return',
+    // 'Prefix' => 'my-file-prefix',
+    // 'Delimiter' => 'my-delimiter',
+
+]);
 ```
 
 ## Installation

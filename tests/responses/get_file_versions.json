@@ -1,0 +1,32 @@
+{  
+   "files":[  
+      {  
+         "action":"upload",
+         "contentLength":583049,
+         "contentSha1":"b374a67d3ec3d344b65293cb4f664867015e6515",
+         "contentType":"application\/zip",
+         "fileId":"4_zed3392ffe89c50eb52800811_f1029791cfa55df24_d20161113_m213120_c001_v0001032_t0019",
+         "fileInfo":{  
+            "src_last_modified_millis":"1479072679808"
+         },
+         "fileName":"ee3c47a2-6f2c-4fa8-87fe-7ad3c5773285.zip",
+         "size":583049,
+         "uploadTimestamp":1479072680000
+      },
+      {  
+         "action":"upload",
+         "contentLength":583049,
+         "contentSha1":"d0e984801ff29436eda34ea67cac62eff5c439d1",
+         "contentType":"application\/zip",
+         "fileId":"4_zed3392ffe89c50eb52800811_f119c18b3bed17a4a_d20161113_m213048_c001_v0001032_t0010",
+         "fileInfo":{  
+            "src_last_modified_millis":"1479072647649"
+         },
+         "fileName":"ee3c47a2-6f2c-4fa8-87fe-7ad3c5773285.zip",
+         "size":583049,
+         "uploadTimestamp":1479072648000
+      }
+   ],
+   "nextFileId":null,
+   "nextFileName":null
+}

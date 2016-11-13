@@ -401,6 +401,75 @@ class Client
     }
 
     /**
+     * Get available versions of a file.
+     *
+     * @param array $options
+     * @return array
+     * @throws ValidationException
+     */
+    public function listFileVersions(array $options)
+    {
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+
+        // The maximum number of files to return from this call - 0 defaults to 100.
+        $maxFileCount = isset($options['MaxFileCount']) ? (int) $options['MaxFileCount'] : 0;
+
+        // Files returned will be limited to those within the top folder, or any one subfolder.
+        $delimiter = isset($options['Delimiter']) ? $options['Delimiter'] : null;
+
+        // The first file name to return.
+        $startFileName = isset($options['StartFileName']) ? $options['StartFileName'] : null;
+
+        // The first file ID to return.
+        $startFileId = isset($options['StartFileId']) ? $options['StartFileId'] : null;
+
+        // StartFileName must also be provided if StartFileId is specified.
+        if (isset($startFileId) && !isset($startFileName)) {
+            throw new ValidationException('StartFileName must be provided when StartFileId field is specified');
+        }
+
+        // Files returned will be limited to those with the given prefix.
+        $prefix = isset($options['Prefix']) ? $options['Prefix'] : null;
+
+        $response = $this->client->request('POST', $this->apiUrl.'/b2_list_file_versions', [
+            'headers' => [
+                'Authorization' => $this->authToken
+            ],
+            'json' => [
+                'bucketId' => $options['BucketId'],
+                'startFileName' => $startFileName,
+                'startFileId' => $startFileId,
+                'maxFileCount' => $maxFileCount,
+                'prefix' => $prefix,
+                'delimiter' => $delimiter,
+            ]
+        ]);
+
+        if (!empty($response['files'])) {
+            $files = [];
+            foreach ($response['files'] as $file) {
+                $files[] = new File(
+                    $file['fileId'],
+                    $file['fileName'],
+                    $file['contentSha1'],
+                    $file['contentLength'],
+                    $file['contentType'],
+                    $file['fileInfo'],
+                    $options['BucketId'],
+                    $file['action'],
+                    $file['uploadTimestamp']
+                );
+            }
+
+            $response['files'] = $files;
+        }
+
+        return $response;
+    }
+
+    /**
      * Authorize the B2 account in order to get an auth token and API/download URLs.
      *
      * @throws \Exception
