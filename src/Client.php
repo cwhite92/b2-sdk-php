@@ -277,6 +277,9 @@ class Client
         if (!isset($options['BucketId']) && isset($options['BucketName'])) {
             $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
         }
+        if(!isset($options['Prefix'])){
+            $options['Prefix'] = NULL;
+        }
 
         if ($fileName) {
             $nextFileName = $fileName;
@@ -293,6 +296,66 @@ class Client
                     'bucketId' => $options['BucketId'],
                     'startFileName' => $nextFileName,
                     'maxFileCount' => $maxFileCount,
+                    'prefix' => $options['Prefix'],
+                ]
+            ]);
+
+            foreach ($response['files'] as $file) {
+                // if we have a file name set, only retrieve information if the file name matches
+                if (!$fileName || ($fileName === $file['fileName'])) {
+                    $files[] = new File($file['fileId'], $file['fileName'], null, $file['size']);
+                }
+            }
+
+            if ($fileName || $response['nextFileName'] === null) {
+                // We've got all the files - break out of loop.
+                break;
+            }
+
+            $nextFileName = $response['nextFileName'];
+        }
+
+        return $files;
+    }
+
+    /**
+     * Lists all of the versions of all of the files contained in one bucket, in alphabetical order by file name, and by reverse of date/time uploaded for versions of files with the same name.
+     *
+     * @param array $options
+     * @return array
+     */
+    public function listVersions(array $options)
+    {
+        // if FileName is set, we only attempt to retrieve information about that single file.
+        $fileName = !empty($options['FileName']) ? $options['FileName'] : null;
+
+        $nextFileName = null;
+        $maxFileCount = 1000;
+        $files = [];
+
+        if (!isset($options['BucketId']) && isset($options['BucketName'])) {
+            $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
+        }
+        if(!isset($options['Prefix'])){
+            $options['Prefix'] = NULL;
+        }
+        
+        if ($fileName) {
+            $nextFileName = $fileName;
+            $maxFileCount = 1;
+        }
+
+        // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
+        while (true) {
+            $response = $this->client->request('POST', $this->apiUrl.'/b2_list_file_versions', [
+                'headers' => [
+                    'Authorization' => $this->authToken
+                ],
+                'json' => [
+                    'bucketId' => $options['BucketId'],
+                    'startFileName' => $nextFileName,
+                    'maxFileCount' => $maxFileCount,
+                    'prefix' => $options['Prefix'],
                 ]
             ]);
 
