@@ -12,6 +12,9 @@ use GuzzleHttp\Client as GuzzleClient;
  */
 class Client extends GuzzleClient
 {
+    protected $retryLimit = 10;
+    protected $retryWaitSec = 10;
+
     /**
      * Sends a response to the B2 API, automatically handling decoding JSON and errors.
      *
@@ -25,6 +28,16 @@ class Client extends GuzzleClient
     {
         $response = parent::request($method, $uri, $options);
 
+        // Support for 503 "too busy errors". Retry multiple times before failure
+        $retries = 0;
+        $wait = $this->retryWaitSec;
+        while ($response->getStatusCode() === 503 and $this->retryLimit > $retries) {
+            $retries++;
+            sleep($wait);
+            $response = parent::request($method, $uri, $options);
+            // Wait 20% longer if it fails again
+            $wait *= 1.2;
+        }
         if ($response->getStatusCode() !== 200) {
             ErrorHandler::handleErrorResponse($response);
         }
