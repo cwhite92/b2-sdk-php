@@ -524,4 +524,38 @@ class ClientTest extends \PHPUnit_Framework_TestCase
             'FileName' => 'fileName'
         ]));
     }
+
+    public function testListFileVersions()
+    {
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_file_versions.json'),
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $versions = $client->listFileVersions([
+            'BucketId' => 'bucketId',
+        ]);
+        
+        $this->assertInternalType('array', $versions);
+        $this->assertInstanceOf(File::class, $versions['files'][0]);
+        $this->assertCount(2, $versions['files']);
+    }
+    public function testListFileVersionsWithStartFileIdButNoStartFileNameThrowsException()
+    {
+        $this->setExpectedException(ValidationException::class);
+
+        $guzzle = $this->buildGuzzleFromResponses([
+            $this->buildResponseFromStub(200, [], 'authorize_account.json'),
+            $this->buildResponseFromStub(200, [], 'get_file_versions.json'),
+        ]);
+
+        $client = new Client('testId', 'testKey', ['client' => $guzzle]);
+
+        $versions = $client->listFileVersions([
+            'BucketId' => 'bucketId',
+            'StartFileId' => 123,
+        ]);
+    }
 }
