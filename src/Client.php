@@ -14,8 +14,18 @@ class Client
     protected $authToken;
     protected $apiUrl;
     protected $downloadUrl;
+    protected $recommendedPartSize;
 
     protected $client;
+
+    /**
+     * Lower limit for using large files upload support. More information:
+     * https://www.backblaze.com/b2/docs/large_files.html. Default: 3 GB
+     * Files larger than this value will be uploaded in multiple parts.
+     *
+     * @var int
+     */
+    protected $largeFileLimit = 3000000000;
 
     /**
      * Client constructor. Accepts the account ID, application key and an optional array of options.
@@ -167,36 +177,6 @@ class Client
             $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
         }
 
-        // Retrieve the URL that we should be uploading to.
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_get_upload_url', [
-            'headers' => [
-                'Authorization' => $this->authToken,
-            ],
-            'json'    => [
-                'bucketId' => $options['BucketId'],
-            ],
-        ]);
-
-        $uploadEndpoint  = $response['uploadUrl'];
-        $uploadAuthToken = $response['authorizationToken'];
-
-        if (is_resource($options['Body'])) {
-            // We need to calculate the file's hash incrementally from the stream.
-            $context = hash_init('sha1');
-            hash_update_stream($context, $options['Body']);
-            $hash = hash_final($context);
-
-            // Similarly, we have to use fstat to get the size of the stream.
-            $size = fstat($options['Body'])['size'];
-
-            // Rewind the stream before passing it to the HTTP client.
-            rewind($options['Body']);
-        } else {
-            // We've been given a simple string body, it's super simple to calculate the hash and size.
-            $hash = sha1($options['Body']);
-            $size = mb_strlen($options['Body']);
-        }
-
         if (!isset($options['FileLastModified'])) {
             $options['FileLastModified'] = round(microtime(true) * 1000);
         }
@@ -205,26 +185,13 @@ class Client
             $options['FileContentType'] = 'b2/x-auto';
         }
 
-        $response = $this->client->request('POST', $uploadEndpoint, [
-            'headers' => [
-                'Authorization'                      => $uploadAuthToken,
-                'Content-Type'                       => $options['FileContentType'],
-                'Content-Length'                     => $size,
-                'X-Bz-File-Name'                     => $options['FileName'],
-                'X-Bz-Content-Sha1'                  => $hash,
-                'X-Bz-Info-src_last_modified_millis' => $options['FileLastModified'],
-            ],
-            'body'    => $options['Body'],
-        ]);
+        list($options['hash'], $options['size']) = $this->getFileHashAndSize($options['Body']);
 
-        return new File(
-            $response['fileId'],
-            $response['fileName'],
-            $response['contentSha1'],
-            $response['contentLength'],
-            $response['contentType'],
-            $response['fileInfo']
-        );
+        if ($options['size'] < $this->largeFileLimit || $options['size'] < $this->recommendedPartSize) {
+            return $this->uploadStandardFile($options);
+        } else {
+            return $this->uploadLargeFile($options);
+        }
     }
 
     /**
@@ -415,9 +382,10 @@ class Client
             'auth' => [$this->accountId, $this->applicationKey],
         ]);
 
-        $this->authToken   = $response['authorizationToken'];
-        $this->apiUrl      = $response['apiUrl'] . '/b2api/v1';
-        $this->downloadUrl = $response['downloadUrl'];
+        $this->authToken           = $response['authorizationToken'];
+        $this->apiUrl              = $response['apiUrl'] . '/b2api/v1';
+        $this->downloadUrl         = $response['downloadUrl'];
+        $this->recommendedPartSize = $response['recommendedPartSize'];
     }
 
     /**
@@ -472,5 +440,188 @@ class Client
         }
 
         return null;
+    }
+
+    /**
+     * Calculate hash and size of file/stream. If $offset and $partSize is given return
+     * hash and size of this chunk
+     *
+     * @param $content
+     * @param int $offset
+     * @param null $partSize
+     * @return array
+     */
+    protected function getFileHashAndSize($data, $offset = 0, $partSize = null)
+    {
+        if (!$partSize) {
+            if (is_resource($data)) {
+                // We need to calculate the file's hash incrementally from the stream.
+                $context = hash_init('sha1');
+                hash_update_stream($context, $data);
+                $hash = hash_final($context);
+                // Similarly, we have to use fstat to get the size of the stream.
+                $size = fstat($data)['size'];
+                // Rewind the stream before passing it to the HTTP client.
+                rewind($data);
+            } else {
+                // We've been given a simple string body, it's super simple to calculate the hash and size.
+                $hash = sha1($data);
+                $size = mb_strlen($data, '8bit');
+            }
+        } else {
+            $dataPart = $this->getPartOfFile($data, $offset, $partSize);
+            $hash     = sha1($dataPart);
+            $size     = mb_strlen($dataPart, '8bit');
+        }
+
+        return array($hash, $size);
+    }
+
+    /**
+     * Return selected part of file
+     *
+     * @param $data
+     * @param $offset
+     * @param $partSize
+     * @return bool|string
+     */
+    protected function getPartOfFile($data, $offset, $partSize)
+    {
+        // Get size and hash of one data chunk
+        if (is_resource($data)) {
+            // Get data chunk
+            fseek($data, $offset);
+            $dataPart = fread($data, $partSize);
+            // Rewind the stream before passing it to the HTTP client.
+            rewind($data);
+        } else {
+            $dataPart = substr($data, $offset, $partSize);
+        }
+        return $dataPart;
+    }
+
+    /**
+     * Upload single file (smaller than 3 GB)
+     *
+     * @param array $options
+     * @return File
+     */
+    protected function uploadStandardFile($options = array())
+    {
+        // Retrieve the URL that we should be uploading to.
+        $response = $this->client->request('POST', $this->apiUrl . '/b2_get_upload_url', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json'    => [
+                'bucketId' => $options['BucketId'],
+            ],
+        ]);
+
+        $uploadEndpoint  = $response['uploadUrl'];
+        $uploadAuthToken = $response['authorizationToken'];
+
+        $response = $this->client->request('POST', $uploadEndpoint, [
+            'headers' => [
+                'Authorization'                      => $uploadAuthToken,
+                'Content-Type'                       => $options['FileContentType'],
+                'Content-Length'                     => $options['size'],
+                'X-Bz-File-Name'                     => $options['FileName'],
+                'X-Bz-Content-Sha1'                  => $options['hash'],
+                'X-Bz-Info-src_last_modified_millis' => $options['FileLastModified'],
+            ],
+            'body'    => $options['Body'],
+        ]);
+
+        return new File(
+            $response['fileId'],
+            $response['fileName'],
+            $response['contentSha1'],
+            $response['contentLength'],
+            $response['contentType'],
+            $response['fileInfo']
+        );
+    }
+
+    /**
+     * Upload large file. Large files will be uploaded in chunks of recommendedPartSize bytes (usually 100MB each)
+     *
+     * @param array $options
+     * @return File
+     */
+    protected function uploadLargeFile($options)
+    {
+        // Prepare for uploading the parts of a large file.
+        $response = $this->client->request('POST', $this->apiUrl . '/b2_start_large_file', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json'    => [
+                'bucketId'    => $options['BucketId'],
+                'fileName'    => $options['FileName'],
+                'contentType' => $options['FileContentType'],
+                /**
+                'fileInfo' => [
+                'src_last_modified_millis' => $options['FileLastModified'],
+                'large_file_sha1' => $options['hash']
+                ]
+                 **/
+            ],
+        ]);
+        $fileId = $response['fileId'];
+
+        $partsCount = ceil($options['size'] / $this->recommendedPartSize);
+
+        $hashParts = [];
+        for ($i = 1; $i <= $partsCount; $i++) {
+            $bytesSent = ($i - 1) * $this->recommendedPartSize;
+            $bytesLeft = $options['size'] - $bytesSent;
+            $partSize  = ($bytesLeft > $this->recommendedPartSize) ? $this->recommendedPartSize : $bytesLeft;
+
+            // Retrieve the URL that we should be uploading to.
+            $response = $this->client->request('POST', $this->apiUrl . '/b2_get_upload_part_url', [
+                'headers' => [
+                    'Authorization' => $this->authToken,
+                ],
+                'json'    => [
+                    'fileId' => $fileId,
+                ],
+            ]);
+
+            $uploadEndpoint  = $response['uploadUrl'];
+            $uploadAuthToken = $response['authorizationToken'];
+
+            list($hash, $size) = $this->getFileHashAndSize($options['Body'], $bytesSent, $partSize);
+            $hashParts[]       = $hash;
+
+            $response = $this->client->request('POST', $uploadEndpoint, [
+                'headers' => [
+                    'Authorization'     => $uploadAuthToken,
+                    'X-Bz-Part-Number'  => $i,
+                    'Content-Length'    => $size,
+                    'X-Bz-Content-Sha1' => $hash,
+                ],
+                'body'    => $this->getPartOfFile($options['Body'], $bytesSent, $partSize),
+            ]);
+        }
+
+        // Finish upload of large file
+        $response = $this->client->request('POST', $this->apiUrl . '/b2_finish_large_file', [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'json'    => [
+                'fileId'        => $fileId,
+                'partSha1Array' => $hashParts,
+            ],
+        ]);
+        return new File(
+            $response['fileId'],
+            $response['fileName'],
+            $response['contentSha1'],
+            $response['contentLength'],
+            $response['contentType'],
+            $response['fileInfo']
+        );
     }
 }
