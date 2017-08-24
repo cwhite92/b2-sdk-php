@@ -12,7 +12,7 @@ use GuzzleHttp\Client as GuzzleClient;
  */
 class Client extends GuzzleClient
 {
-    protected $retryLimit = 10;
+    protected $retryLimit   = 10;
     protected $retryWaitSec = 10;
 
     /**
@@ -30,7 +30,7 @@ class Client extends GuzzleClient
 
         // Support for 503 "too busy errors". Retry multiple times before failure
         $retries = 0;
-        $wait = $this->retryWaitSec;
+        $wait    = $this->retryWaitSec;
         while ($response->getStatusCode() === 503 and $this->retryLimit > $retries) {
             $retries++;
             sleep($wait);
