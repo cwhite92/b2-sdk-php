@@ -1,8 +1,8 @@
 {
-    "name": "cwhite92/b2-sdk-php",
-    "description": "A SDK for working with B2 cloud storage.",
+    "name": "runcloudio/b2-sdk-php",
+    "description": "An SDK for working with B2 cloud storage.",
     "keywords": ["b2", "storage", "backblaze", "cloud", "filesystem", "backup"],
-    "homepage": "https://github.com/cwhite92/b2-sdk-php",
+    "homepage": "https://github.com/RunCloudIO/b2-sdk-php",
     "license": "MIT",
     "type": "library",
     "authors": [
@@ -10,6 +10,11 @@
             "name": "Chris White",
             "email": "chris@cwhite.me",
             "homepage": "https://cwhite.me"
+        }, {
+            "name": "Ahmad Fikrizaman",
+            "email": "fikri@runcloud.io",
+            "homepage": "https://runcloud.io",
+            "role": "CTO"
         }
     ],
     "require": {
