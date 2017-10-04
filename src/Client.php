@@ -2,14 +2,19 @@
 
 namespace ChrisWhite\B2;
 
+use ChrisWhite\B2\Exceptions\CacheException;
 use ChrisWhite\B2\Exceptions\NotFoundException;
 use ChrisWhite\B2\Exceptions\ValidationException;
 use ChrisWhite\B2\Http\Client as HttpClient;
+use Illuminate\Cache\CacheManager;
+use Illuminate\Container\Container;
+use Illuminate\Filesystem\Filesystem;
 
 class Client
 {
     protected $accountId;
     protected $applicationKey;
+    protected $cache;
 
     protected $authToken;
     protected $apiUrl;
@@ -45,7 +50,32 @@ class Client
             $this->client = new HttpClient(['exceptions' => false]);
         }
 
+        // initialize cache
+        $this->createCacheContainer();
+
         $this->authorizeAccount();
+    }
+
+    private function createCacheContainer()
+    {
+        $container           = new Container;
+        $container['config'] = [
+            'cache.default'     => 'file',
+            'cache.stores.file' => [
+                'driver' => 'file',
+                'path'   => __DIR__ . '/Cache',
+            ],
+        ];
+        $container['files'] = new Filesystem;
+
+        try {
+            $cacheManager = new CacheManager($container);
+            $this->cache  = $cacheManager->store();
+        } catch (\Exception $e) {
+            throw new CacheException(
+                $e->getMessage()
+            );
+        }
     }
 
     /**
@@ -378,9 +408,15 @@ class Client
      */
     protected function authorizeAccount()
     {
-        $response = $this->client->request('GET', 'https://api.backblazeb2.com/b2api/v1/b2_authorize_account', [
-            'auth' => [$this->accountId, $this->applicationKey],
-        ]);
+        $client         = $this->client;
+        $accountId      = $this->accountId;
+        $applicationKey = $this->applicationKey;
+
+        $response = $this->cache->remember('RunCloud-B2-SDK-Authorization', 60, function () use ($client, $accountId, $applicationKey) {
+            return $client->request('GET', 'https://api.backblazeb2.com/b2api/v1/b2_authorize_account', [
+                'auth' => [$accountId, $applicationKey],
+            ]);
+        });
 
         $this->authToken           = $response['authorizationToken'];
         $this->apiUrl              = $response['apiUrl'] . '/b2api/v1';
