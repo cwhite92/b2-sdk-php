@@ -26,6 +26,7 @@ class Client
      */
     public function __construct($accountId, $applicationKey, array $options = [])
     {
+
         $this->accountId = $accountId;
         $this->applicationKey = $applicationKey;
 
@@ -34,8 +35,15 @@ class Client
         } else {
             $this->client = new HttpClient(['exceptions' => false]);
         }
+        
+        if(!empty($options['authorization'])){
+	        $this->authToken = $options['authorization']['authToken'];
+	        $this->apiUrl = $options['authorization']['apiUrl'];
+	        $this->downloadUrl = $options['authorization']['downloadUrl'];
+        } else {
+	        $this->authorizeAccount();
+        }
 
-        $this->authorizeAccount();
     }
 
     /**
@@ -398,6 +406,22 @@ class Client
         ]);
 
         return true;
+    }
+    
+    /**
+     * Retrieve authorization details from connection
+     *
+     * @return array
+     */
+    public function getAuthorization()
+    {
+		
+		return [
+			'authToken' 	=> $this->authToken,
+			'apiUrl'		=> $this->apiUrl,
+			'downloadUrl'	=> $this->downloadUrl
+		];
+		
     }
 
     /**
