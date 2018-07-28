@@ -237,7 +237,7 @@ class Client
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
-            'sink'    => isset($options['SaveAs']) ? $options['SaveAs'] : null,
+            'sink'    => isset($options['SaveAs']) ? $options['SaveAs'] : fopen('php://stdout', 'w'),
         ];
 
         if (isset($options['FileId'])) {
