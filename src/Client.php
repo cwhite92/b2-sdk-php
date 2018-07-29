@@ -217,7 +217,7 @@ class Client
 
         list($options['hash'], $options['size']) = $this->getFileHashAndSize($options['Body']);
 
-        if ($options['size'] < $this->largeFileLimit || $options['size'] < $this->recommendedPartSize) {
+        if ($options['size'] <= $this->largeFileLimit && $options['size'] <= $this->recommendedPartSize) {
             return $this->uploadStandardFile($options);
         } else {
             return $this->uploadLargeFile($options);

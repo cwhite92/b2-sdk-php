@@ -51,6 +51,5 @@ class Client extends GuzzleClient
         }
 
         return $response->getBody();
-        // return $response->getBody()->getContents();
     }
 }
