@@ -261,6 +261,17 @@ class Client
         return isset($options['SaveAs']) ? true : $response;
     }
 
+    public function accelRedirectData(array $options)
+    {
+        $parsed = parse_url($this->downloadUrl);
+
+        return [
+            'Authorization' => $this->authToken,
+            'host'          => $parsed['host'],
+            'query'         => sprintf("FileId=%s", $options['FileId']),
+        ];
+    }
+
     /**
      * Retrieve a collection of File objects representing the files stored inside a bucket.
      *
