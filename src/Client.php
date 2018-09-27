@@ -268,7 +268,7 @@ class Client
         return [
             'Authorization' => $this->authToken,
             'host'          => $parsed['host'],
-            'query'         => sprintf("FileId=%s", $options['FileId']),
+            'query'         => sprintf("fileId=%s", $options['FileId']),
         ];
     }
 
