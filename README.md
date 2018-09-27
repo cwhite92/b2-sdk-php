@@ -7,6 +7,8 @@
 `b2-sdk-php` is a client library for working with Backblaze's B2 storage service. It aims to make using the service as
 easy as possible by exposing a clear API and taking influence from other SDKs that you may be familiar with.
 
+This package will **cache authorization request** for 1 hour so that you won't receive API Limit from B2.
+
 ## Example
 
 This is just a short example, full examples to come on the wiki.
@@ -79,7 +81,7 @@ $fileList = $client->listFiles([
 Installation is via Composer:
 
 ```bash
-$ composer require cwhite92/b2-sdk-php
+$ composer require runcloudio/b2-sdk-php
 ```
 
 ## Tests
