@@ -204,8 +204,8 @@ class Client
         if (!isset($options['FileContentType'])) {
             $options['FileContentType'] = 'b2/x-auto';
         }
-
-        $response = $this->client->request('POST', $uploadEndpoint, [
+        
+        $body = [
             'headers' => [
                 'Authorization' => $uploadAuthToken,
                 'Content-Type' => $options['FileContentType'],
@@ -215,7 +215,15 @@ class Client
                 'X-Bz-Info-src_last_modified_millis' => $options['FileLastModified']
             ],
             'body' => $options['Body']
-        ]);
+        ];
+        
+        if (isset($options['FileInfo']) && is_array($options['FileInfo'])) {
+            foreach($options['FileInfo'] as $key => $value) {
+                $body['headers']["X-Bz-Info-{$key}"] = $value;
+            }
+        }
+
+        $response = $this->client->request('POST', $uploadEndpoint, $body);
 
         return new File(
             $response['fileId'],
