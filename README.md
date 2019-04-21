@@ -23,7 +23,7 @@ $bucket = $client->createBucket([
     'BucketType' => Bucket::TYPE_PRIVATE // or TYPE_PUBLIC
 ]);
 
-// Change the bucket to private. Also returns a Bucket object.
+// Change the bucket to public. Also returns a Bucket object.
 $updatedBucket = $client->updateBucket([
     'BucketId' => $bucket->getId(),
     'BucketType' => Bucket::TYPE_PUBLIC
