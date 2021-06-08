@@ -228,6 +228,34 @@ class Client
     }
 
     /**
+     * get the file url from a B2 bucket.
+     *
+     * @param array $options
+     * @return string
+     */
+    public function getURL(array $options){
+        $requestUrl     = null;
+        $requestOptions = [
+            'headers' => [
+                'Authorization' => $this->authToken,
+            ],
+            'sink'    => isset($options['SaveAs']) ? $options['SaveAs'] : null,
+        ];
+    
+        if (isset($options['FileId'])) {
+            $requestOptions['query'] = ['fileId' => $options['FileId']];
+            $requestUrl              = $this->downloadUrl . '/b2api/v1/b2_download_file_by_id';
+        } else {
+            if (!isset($options['BucketName']) && isset($options['BucketId'])) {
+                $options['BucketName'] = $this->getBucketNameFromId($options['BucketId']);
+            }
+    
+            $requestUrl = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['BucketName'], $options['FileName']);
+        }
+        return $requestUrl;
+    }  
+
+    /**
      * Download a file from a B2 bucket.
      *
      * @param array $options
