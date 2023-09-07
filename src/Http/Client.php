@@ -24,7 +24,7 @@ class Client extends GuzzleClient
      * @param bool $asJson
      * @return mixed|string
      */
-    public function request($method, $uri = null, array $options = [], $asJson = true, $wantsGetContents = true)
+    public function request($method, $uri = null, array $options = [], $asJson = false, $wantsGetContents = false): \Psr\Http\Message\ResponseInterface
     {
         $response = parent::request($method, $uri, $options);
 
@@ -42,14 +42,14 @@ class Client extends GuzzleClient
             ErrorHandler::handleErrorResponse($response);
         }
 
-        if ($asJson) {
-            return json_decode($response->getBody(), true);
-        }
+//        if ($asJson) {
+//            return json_decode($response->getBody(), true);
+//        }
 
-        if (!$wantsGetContents) {
-            return $response->getBody();
-        }
+//        if (!$wantsGetContents) {
+//            return $response->getBody();
+//        }
 
-        return $response->getBody();
+        return $response;
     }
 }

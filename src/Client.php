@@ -9,6 +9,7 @@ use ChrisWhite\B2\Http\Client as HttpClient;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Container\Container;
 use Illuminate\Filesystem\Filesystem;
+use Psr\Http\Message\ResponseInterface;
 
 class Client
 {
@@ -93,7 +94,7 @@ class Client
             );
         }
 
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_create_bucket', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_create_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -102,7 +103,7 @@ class Client
                 'bucketName' => $options['BucketName'],
                 'bucketType' => $options['BucketType'],
             ],
-        ]);
+        ]));
 
         return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
     }
@@ -126,7 +127,7 @@ class Client
             $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
         }
 
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_update_bucket', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_update_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -135,7 +136,7 @@ class Client
                 'bucketId'   => $options['BucketId'],
                 'bucketType' => $options['BucketType'],
             ],
-        ]);
+        ]));
 
         return new Bucket($response['bucketId'], $response['bucketName'], $response['bucketType']);
     }
@@ -149,14 +150,14 @@ class Client
     {
         $buckets = [];
 
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_list_buckets', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_list_buckets', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
             'json'    => [
                 'accountId' => $this->accountId,
             ],
-        ]);
+        ]));
 
         foreach ($response['buckets'] as $bucket) {
             $buckets[] = new Bucket($bucket['bucketId'], $bucket['bucketName'], $bucket['bucketType']);
@@ -177,7 +178,7 @@ class Client
             $options['BucketId'] = $this->getBucketIdFromName($options['BucketName']);
         }
 
-        $this->client->request('POST', $this->apiUrl . '/b2_delete_bucket', [
+        $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_delete_bucket', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -185,7 +186,7 @@ class Client
                 'accountId' => $this->accountId,
                 'bucketId'  => $options['BucketId'],
             ],
-        ]);
+        ]));
 
         return true;
     }
@@ -253,9 +254,9 @@ class Client
 
         if (isset($options['stream'])) {
             $requestOptions['stream'] = $options['stream'];
-            $response                 = $this->client->request('GET', $requestUrl, $requestOptions, false, false);
+            $response                 = $this->getGuzzleContent($this->client->request('GET', $requestUrl, $requestOptions, false, false));
         } else {
-            $response = $this->client->request('GET', $requestUrl, $requestOptions, false);
+            $response = $this->getGuzzleContent($this->client->request('GET', $requestUrl, $requestOptions, false));
         }
 
         return isset($options['SaveAs']) ? true : $response;
@@ -298,7 +299,7 @@ class Client
 
         // B2 returns, at most, 1000 files per "page". Loop through the pages and compile an array of File objects.
         while (true) {
-            $response = $this->client->request('POST', $this->apiUrl . '/b2_list_file_names', [
+            $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_list_file_names', [
                 'headers' => [
                     'Authorization' => $this->authToken,
                 ],
@@ -307,7 +308,7 @@ class Client
                     'startFileName' => $nextFileName,
                     'maxFileCount'  => $maxFileCount,
                 ],
-            ]);
+            ]));
 
             foreach ($response['files'] as $file) {
                 // if we have a file name set, only retrieve information if the file name matches
@@ -357,14 +358,14 @@ class Client
             }
         }
 
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_get_file_info', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_get_file_info', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
             'json'    => [
                 'fileId' => $options['FileId'],
             ],
-        ]);
+        ]));
 
         return new File(
             $response['fileId'],
@@ -399,7 +400,7 @@ class Client
             $options['FileId'] = $file->getId();
         }
 
-        $this->client->request('POST', $this->apiUrl . '/b2_delete_file_version', [
+        $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_delete_file_version', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -407,7 +408,7 @@ class Client
                 'fileName' => $options['FileName'],
                 'fileId'   => $options['FileId'],
             ],
-        ]);
+        ]));
 
         return true;
     }
@@ -424,9 +425,9 @@ class Client
         $applicationKey = $this->applicationKey;
 
         $response = $this->cache->remember('RunCloud-B2-SDK-Authorization', 60, function () use ($client, $accountId, $applicationKey) {
-            return $client->request('GET', 'https://api.backblazeb2.com/b2api/v1/b2_authorize_account', [
+            return $this->getGuzzleContent($client->request('GET', 'https://api.backblazeb2.com/b2api/v1/b2_authorize_account', [
                 'auth' => [$accountId, $applicationKey],
-            ]);
+            ]));
         });
 
         $this->authToken           = $response['authorizationToken'];
@@ -556,19 +557,19 @@ class Client
     protected function uploadStandardFile($options = array())
     {
         // Retrieve the URL that we should be uploading to.
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_get_upload_url', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_get_upload_url', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
             'json'    => [
                 'bucketId' => $options['BucketId'],
             ],
-        ]);
+        ]));
 
         $uploadEndpoint  = $response['uploadUrl'];
         $uploadAuthToken = $response['authorizationToken'];
 
-        $response = $this->client->request('POST', $uploadEndpoint, [
+        $response = $this->getGuzzleContent($this->client->request('POST', $uploadEndpoint, [
             'headers' => [
                 'Authorization'                      => $uploadAuthToken,
                 'Content-Type'                       => $options['FileContentType'],
@@ -578,7 +579,7 @@ class Client
                 'X-Bz-Info-src_last_modified_millis' => $options['FileLastModified'],
             ],
             'body'    => $options['Body'],
-        ]);
+        ]));
 
         return new File(
             $response['fileId'],
@@ -599,7 +600,7 @@ class Client
     protected function uploadLargeFile($options)
     {
         // Prepare for uploading the parts of a large file.
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_start_large_file', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_start_large_file', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -614,7 +615,7 @@ class Client
                 ]
                  **/
             ],
-        ]);
+        ]));
         $fileId = $response['fileId'];
 
         $partsCount = ceil($options['size'] / $this->recommendedPartSize);
@@ -626,14 +627,14 @@ class Client
             $partSize  = ($bytesLeft > $this->recommendedPartSize) ? $this->recommendedPartSize : $bytesLeft;
 
             // Retrieve the URL that we should be uploading to.
-            $response = $this->client->request('POST', $this->apiUrl . '/b2_get_upload_part_url', [
+            $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_get_upload_part_url', [
                 'headers' => [
                     'Authorization' => $this->authToken,
                 ],
                 'json'    => [
                     'fileId' => $fileId,
                 ],
-            ]);
+            ]));
 
             $uploadEndpoint  = $response['uploadUrl'];
             $uploadAuthToken = $response['authorizationToken'];
@@ -641,7 +642,7 @@ class Client
             list($hash, $size) = $this->getFileHashAndSize($options['Body'], $bytesSent, $partSize);
             $hashParts[]       = $hash;
 
-            $response = $this->client->request('POST', $uploadEndpoint, [
+            $response = $this->getGuzzleContent($this->client->request('POST', $uploadEndpoint, [
                 'headers' => [
                     'Authorization'     => $uploadAuthToken,
                     'X-Bz-Part-Number'  => $i,
@@ -649,11 +650,11 @@ class Client
                     'X-Bz-Content-Sha1' => $hash,
                 ],
                 'body'    => $this->getPartOfFile($options['Body'], $bytesSent, $partSize),
-            ]);
+            ]));
         }
 
         // Finish upload of large file
-        $response = $this->client->request('POST', $this->apiUrl . '/b2_finish_large_file', [
+        $response = $this->getGuzzleContent($this->client->request('POST', $this->apiUrl . '/b2_finish_large_file', [
             'headers' => [
                 'Authorization' => $this->authToken,
             ],
@@ -661,7 +662,7 @@ class Client
                 'fileId'        => $fileId,
                 'partSha1Array' => $hashParts,
             ],
-        ]);
+        ]));
         return new File(
             $response['fileId'],
             $response['fileName'],
@@ -670,5 +671,17 @@ class Client
             $response['contentType'],
             $response['fileInfo']
         );
+    }
+
+    private function getGuzzleContent(ResponseInterface $response, $asJson = true, $wantsGetContents = true) {
+        if ($asJson) {
+            return json_decode($response->getBody(), true);
+        }
+
+        if (!$wantsGetContents) {
+            return $response->getBody();
+        }
+
+        return $response->getBody();
     }
 }

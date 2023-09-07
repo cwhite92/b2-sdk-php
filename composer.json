@@ -19,7 +19,7 @@
     ],
     "require": {
         "php": ">=5.5.0",
-        "guzzlehttp/guzzle": "^6.1",
+        "guzzlehttp/guzzle": "^6.5|^7.2",
         "illuminate/cache": ">=5.1.0",
         "illuminate/container": ">=5.1.0",
         "illuminate/filesystem": ">=5.1.0"
